@@ -1,10 +1,11 @@
 import './header.css';
+import logo from '../../assets/logo.svg';
 
 function Header() {
   return (
     <header className="header">
       <div className="header-content">
-        <h1 className="brand-name">wealthPlus</h1>
+        <img src={logo} alt="Wealth Plus Logo" className="header-logo" />
       </div>
     </header>
   );

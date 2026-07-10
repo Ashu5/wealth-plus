@@ -1,20 +1,25 @@
 .header {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background-color: #b1afaf;
   padding: 16px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .header-content {
   max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   padding: 0 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.brand-name {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0;
-  letter-spacing: -0.5px;
+.header-logo {
+  max-width: 220px;
+  max-height: 70px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
