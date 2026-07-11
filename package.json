@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "react": "^19.2.0",
+    "react-data-table-component": "^8.5.2",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
