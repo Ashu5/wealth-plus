@@ -68,6 +68,7 @@ function PortfolioSummarySection({
   monthOptions,
   fundTypeOptions,
 }: PortfolioSummarySectionProps) {
+  const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
   const columns: TableColumn<PortfolioEntry>[] = [
     {
       name: 'Month',
@@ -139,6 +140,7 @@ function PortfolioSummarySection({
           <p className="eyebrow">Portfolio Details</p>
           <h2>Portfolio Summary</h2>
         </div>
+         <span className="pill">₹{totalAmount.toLocaleString()}</span>
       </div>
 
       <FilterBar

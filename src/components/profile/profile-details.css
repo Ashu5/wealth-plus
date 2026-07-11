@@ -1,0 +1,113 @@
+.profile-details-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.profile-details-card {
+  width: 100%;
+  max-width: 500px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.profile-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.profile-details-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.profile-details-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.profile-details-close {
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #334155;
+}
+
+.profile-details-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-detail-label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.profile-detail-value {
+  color: #0f172a;
+  text-align: right;
+}
+
+.profile-detail-actions {
+  margin-top: 8px;
+}
+
+.profile-change-password-btn,
+.profile-save-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.profile-change-password-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.profile-save-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.password-form input {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.password-message {
+  color: #0f766e;
+  font-size: 0.9rem;
+  margin: 0;
+}
