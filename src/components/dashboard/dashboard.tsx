@@ -4,6 +4,8 @@ import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-secti
 import FixedDepositsSummarySection from '../deposit/deposit-summary-section';
 import InvestmentSummarySection from '../investmentsummary/investment-summary-section';
 import type { FixedDepositEntry, ModalConfig, PortfolioEntry, StepDefinition } from './types';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const initialPortfolioEntries: PortfolioEntry[] = [
   {
@@ -131,7 +133,9 @@ function Dashboard() {
   const [formData, setFormData] = useState<Record<string, string>>({
     investmentType: 'Mutual Fund',
     bank: 'ICICI Bank',
+     folioNumber: '',
   });
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [recentEntries, setRecentEntries] = useState<string[]>([]);
 
   const monthOptions = useMemo(() => {
@@ -181,67 +185,84 @@ function Dashboard() {
   const portfolioGain = portfolioValue - filteredPortfolioEntries.reduce((sum, item) => sum + item.amount, 0);
 
   const openModal = () => {
-    setActiveModal(monthlyModalConfig);
-    setFormData({ investmentType: 'Mutual Fund', bank: 'ICICI Bank' });
-  };
+  setActiveModal(monthlyModalConfig);
+  setFormData({
+    investmentType: 'Mutual Fund',
+    bank: 'ICICI Bank',
+    folioNumber: '',
+  });
+  setSelectedDate(new Date());
+};
 
-  const closeModal = () => {
-    setActiveModal(null);
-    setFormData({ investmentType: 'Mutual Fund', bank: 'ICICI Bank' });
-  };
+  
+const closeModal = () => {
+  setActiveModal(null);
+  setFormData({
+    investmentType: 'Mutual Fund',
+    bank: 'ICICI Bank',
+    folioNumber: '',
+  });
+  setSelectedDate(new Date());
+};
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+const handleSubmit = (e: FormEvent) => {
+  e.preventDefault();
 
-    const investmentType = formData.investmentType ?? 'Mutual Fund';
-    const bank = formData.bank || 'ICICI Bank';
-    const month = formData.month || '2026-08';
-    const amount = Number(formData.amount || 0);
+  const investmentType = formData.investmentType ?? 'Mutual Fund';
+  const bank = formData.bank || 'ICICI Bank';
+  const folioNumber = formData.folioNumber || '';
+  const amount = Number(formData.amount || 0);
 
-    if (investmentType === 'Fixed Deposit') {
-      const entry: FixedDepositEntry = {
-        id: `fd-${Date.now()}`,
-        month,
-        investmentType: 'Fixed Deposit',
-        bank,
-        scheme: formData.scheme || 'Fixed Deposit',
-        amount,
-        tenure: formData.tenure || '12 Months',
-        rate: Number(formData.rate || 0),
-        maturityDate: formData.maturityDate || '2027-01-01',
-      };
+  const selectedMonth = selectedDate
+    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`
+    : '2026-08';
 
-      setFixedDepositEntries((prev) => [entry, ...prev]);
-      setRecentEntries((prev) => [
-        `FD added: ${entry.bank} - ₹${entry.amount.toLocaleString()}`,
-        ...prev,
-      ].slice(0, 4));
-    } else {
-      const entry: PortfolioEntry = {
-        id: `pf-${Date.now()}`,
-        month,
-        investmentType: 'Mutual Fund',
-        bank,
-        name: formData.name || 'New Mutual Fund',
-        amount,
-        currentValue: Number(formData.currentValue || amount),
-        status: 'Growing',
-      };
+  if (investmentType === 'Fixed Deposit') {
+    const entry: FixedDepositEntry = {
+      id: `fd-${Date.now()}`,
+      month: selectedMonth,
+      investmentType: 'Fixed Deposit',
+      bank,
+      scheme: formData.scheme || 'Fixed Deposit',
+      amount,
+      tenure: formData.tenure || '12 Months',
+      rate: Number(formData.rate || 0),
+      maturityDate: formData.maturityDate || '2027-01-01',
+    };
 
-      setPortfolioEntries((prev) => [entry, ...prev]);
-      setRecentEntries((prev) => [
-        `Mutual fund added: ${entry.name} - ₹${entry.amount.toLocaleString()}`,
-        ...prev,
-      ].slice(0, 4));
-    }
+    setFixedDepositEntries((prev) => [entry, ...prev]);
+    setRecentEntries((prev) => [
+      `FD added: ${entry.bank} - ₹${entry.amount.toLocaleString()}`,
+      ...prev,
+    ].slice(0, 4));
+  } else {
+    const entry: PortfolioEntry = {
+      id: `pf-${Date.now()}`,
+      month: selectedMonth,
+      investmentType: 'Mutual Fund',
+      bank: '',
+      name: formData.name || 'New Mutual Fund',
+      amount,
+      currentValue: Number(formData.currentValue || amount),
+      status: 'Growing',
+      // @ts-expect-error - add runtime field for the portfolio table
+      folioNumber,
+    };
 
-    closeModal();
-  };
+    setPortfolioEntries((prev) => [entry, ...prev]);
+    setRecentEntries((prev) => [
+      `Mutual fund added: ${entry.name} - ₹${entry.amount.toLocaleString()}`,
+      ...prev,
+    ].slice(0, 4));
+  }
+
+  closeModal();
+};
 
   return (
     <main className="dashboard-page">
@@ -291,15 +312,14 @@ function Dashboard() {
 
             <form onSubmit={handleSubmit}>
               <div className="field-group">
-                <label htmlFor="month">Month</label>
-                <input
-                  id="month"
-                  name="month"
-                  type="text"
-                  placeholder="2026-06"
-                  value={formData.month || ''}
-                  onChange={handleChange}
-                  required
+                <label htmlFor="investmentDate">Investment Date</label>
+                <DatePicker
+                  id="investmentDate"
+                  selected={selectedDate}
+                  onChange={(date:Date|null) => setSelectedDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  className="date-picker-input"
+                  popperPlacement="bottom-start"
                 />
               </div>
 
@@ -315,32 +335,32 @@ function Dashboard() {
                   <option value="Fixed Deposit">Fixed Deposit</option>
                 </select>
               </div>
-
-              <div className="field-group">
-                <label htmlFor="bank">Bank</label>
-                <select id="bank" name="bank" value={formData.bank || 'ICICI Bank'} onChange={handleChange}>
-                  {['ICICI Bank', 'HDFC Bank', 'SBI Bank'].map((bank) => (
-                    <option key={bank} value={bank}>
-                      {bank}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+              
               {formData.investmentType === 'Fixed Deposit' ? (
-                <>
-                  <div className="field-group">
-                    <label htmlFor="scheme">Scheme</label>
-                    <input
-                      id="scheme"
-                      name="scheme"
-                      type="text"
-                      placeholder="Regular FD"
-                      value={formData.scheme || ''}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
+                <div className="field-group">
+                  <label htmlFor="bank">Bank</label>
+                  <select id="bank" name="bank" value={formData.bank || 'ICICI Bank'} onChange={handleChange}>
+                    {['ICICI Bank', 'HDFC Bank', 'SBI Bank'].map((bank) => (
+                      <option key={bank} value={bank}>
+                        {bank}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="field-group">
+                  <label htmlFor="folioNumber">Folio Number</label>
+                  <input
+                    id="folioNumber"
+                    name="folioNumber"
+                    type="text"
+                    placeholder="123456789"
+                    value={formData.folioNumber || ''}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              )}
 
                   <div className="field-group">
                     <label htmlFor="amount">Amount</label>
@@ -393,8 +413,7 @@ function Dashboard() {
                       required
                     />
                   </div>
-                </>
-              ) : (
+               : (
                 <>
                   <div className="field-group">
                     <label htmlFor="name">Investment Name</label>
@@ -434,7 +453,7 @@ function Dashboard() {
                     />
                   </div>
                 </>
-              )}
+              
 
               <div className="modal-actions">
                 <button type="button" className="cancel-btn" onClick={closeModal}>

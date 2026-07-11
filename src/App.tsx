@@ -31,9 +31,9 @@ function AppShell() {
           path="/home"
           element={
             <>
-              <Header />
+          
               <Homepage />
-              <Footer />
+            
             </>
           }
         />

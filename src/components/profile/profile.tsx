@@ -54,7 +54,7 @@ function ProfileComponent() {
     localStorage.removeItem('wealth-plus-last-login');
     localStorage.removeItem('wealth-plus-password');
     setMenuOpen(false);
-    navigate('/login');
+    navigate('/home');
   };
 
   return (

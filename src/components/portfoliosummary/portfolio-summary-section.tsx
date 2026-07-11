@@ -83,6 +83,15 @@ function PortfolioSummarySection({
       grow: 2,
     },
     {
+      name: 'Folio Number',
+      cell: (row) => {
+        const folioNumber = (row as PortfolioEntry & { folioNumber?: string }).folioNumber;
+        return folioNumber || '-';
+      },
+      sortable: true,
+      grow: 1,
+    },
+    {
       name: 'Amount',
       cell: (row) => `₹${row.amount.toLocaleString()}`,
       sortable: true,

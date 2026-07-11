@@ -1,67 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Eye, EyeOff, Lock, Mail, TrendingUp, TrendingDown, ArrowUpRight } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Lock, Mail, ArrowUpRight } from "lucide-react";
 import "./home.css";
-
-type Holding = {
-  symbol: string;
-  name: string;
-  price: number;
-  changePct: number;
-};
-
-const INITIAL_HOLDINGS: Holding[] = [
-  { symbol: "NVDA", name: "Nvidia Corp", price: 187.42, changePct: 2.14 },
-  { symbol: "VOO", name: "Vanguard S&P 500", price: 612.08, changePct: 0.38 },
-  { symbol: "AAPL", name: "Apple Inc", price: 231.55, changePct: -0.62 },
-  { symbol: "BTC", name: "Bitcoin", price: 96_340, changePct: 1.87 },
-  { symbol: "TSLA", name: "Tesla Inc", price: 268.91, changePct: -1.24 },
-];
-
-const TICKER_ROW = [
-  { symbol: "S&P 500", delta: "+0.42%", up: true },
-  { symbol: "NASDAQ", delta: "+0.71%", up: true },
-  { symbol: "DOW", delta: "-0.18%", up: false },
-  { symbol: "BTC/USD", delta: "+1.87%", up: true },
-  { symbol: "10Y YIELD", delta: "-0.03%", up: false },
-  { symbol: "GOLD", delta: "+0.29%", up: true },
-  { symbol: "EUR/USD", delta: "-0.11%", up: false },
-  { symbol: "VIX", delta: "-2.40%", up: false },
-];
-
-function formatMoney(n: number) {
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function Sparkline() {
-  // A hand-authored path suggesting an upward, slightly volatile equity curve.
-  return (
-    <svg viewBox="0 0 320 96" className="sparkline" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3FB68B" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#3FB68B" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M0,70 L20,66 L40,72 L60,58 L80,62 L100,46 L120,52 L140,38 L160,42 L180,26 L200,32 L220,20 L240,24 L260,12 L280,16 L300,6 L320,10 L320,96 L0,96 Z"
-        fill="url(#sparkFill)"
-      />
-      <path
-        d="M0,70 L20,66 L40,72 L60,58 L80,62 L100,46 L120,52 L140,38 L160,42 L180,26 L200,32 L220,20 L240,24 L260,12 L280,16 L300,6 L320,10"
-        fill="none"
-        stroke="#3FB68B"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+import logo from "../../assets/logo_big.png";
 
 function GoogleMark() {
   return (
@@ -95,66 +36,102 @@ function AppleMark() {
 }
 
 export default function Homepage() {
-  const [holdings, setHoldings] = useState<Holding[]>(INITIAL_HOLDINGS);
-  const [portfolioValue, setPortfolioValue] = useState(284_612.4);
-  const [portfolioDelta, setPortfolioDelta] = useState(1.92);
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setHoldings((prev) =>
-        prev.map((h) => {
-          const wiggle = (Math.random() - 0.5) * 0.6;
-          return {
-            ...h,
-            price: Math.max(0.01, h.price * (1 + wiggle / 100)),
-            changePct: h.changePct + wiggle * 0.4,
-          };
-        })
-      );
-      setPortfolioDelta((d) => d + (Math.random() - 0.5) * 0.15);
-      setPortfolioValue((v) => Math.max(0, v * (1 + (Math.random() - 0.48) / 400)));
-    }, 2600);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+
+    if (authMode !== "signin") return;
+
+    const emailValue = identifier.trim();
+    const passwordValue = password.trim();
+
+    if (!emailValue || !passwordValue) return;
+
+    localStorage.setItem("wealth-plus-auth", "true");
+    localStorage.setItem(
+      "wealth-plus-user",
+      emailValue.includes("@") ? emailValue.split("@")[0] : emailValue
+    );
+    localStorage.setItem("wealth-plus-email", emailValue);
+    localStorage.setItem("wealth-plus-full-name", "Admin User");
+    localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
+    localStorage.setItem("wealth-plus-password", passwordValue);
+
+    navigate("/dashboard");
+  };
+
+  const handleOAuthLogin = (provider: "google" | "apple") => {
+    const baseUrl =
+      provider === "google"
+        ? "https://accounts.google.com/o/oauth2/v2/auth"
+        : "https://appleid.apple.com/auth/authorize";
+
+    const params =
+      provider === "google"
+        ? new URLSearchParams({
+            client_id: "YOUR_GOOGLE_CLIENT_ID",
+            redirect_uri: `${window.location.origin}/oauth/google/callback`,
+            response_type: "code",
+            scope: "openid email profile",
+            prompt: "select_account",
+          })
+        : new URLSearchParams({
+            client_id: "YOUR_APPLE_CLIENT_ID",
+            redirect_uri: `${window.location.origin}/oauth/apple/callback`,
+            response_type: "code",
+            scope: "name email",
+            response_mode: "form_post",
+          });
+
+    const authUrl = `${baseUrl}?${params.toString()}`;
+
+    const popup = window.open(
+      authUrl,
+      "oauth",
+      "width=500,height=700,left=200,top=100"
+    );
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "oauth-success") return;
+
+      const { name, email } = event.data;
+
+      localStorage.setItem("wealth-plus-auth", "true");
+      localStorage.setItem("wealth-plus-user", name || email?.split("@")[0] || "User");
+      localStorage.setItem("wealth-plus-email", email || "");
+      localStorage.setItem("wealth-plus-full-name", name || "User");
+      localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
+      localStorage.setItem("wealth-plus-password", "oauth");
+
+      window.removeEventListener("message", handleMessage);
+      popup?.close();
+      navigate("/dashboard");
     };
-  }, []);
+
+    window.addEventListener("message", handleMessage);
+  };
 
   return (
-    <div className="ledgerline-page">
-      {/* faint grid texture, financial-graph-paper feel */}
+    <div className="wealthplus-page">
       <div className="bg-grid" />
-      {/* radial glow behind the login card */}
       <div className="bg-glow" />
 
-      {/* ticker tape */}
-      <div className="ticker-tape">
-        <div className="ticker-track">
-          {[...TICKER_ROW, ...TICKER_ROW, ...TICKER_ROW, ...TICKER_ROW].map((t, i) => (
-            <span key={i} className="ticker-item font-mono-data">
-              <span className="symbol">{t.symbol}</span>
-              <span className={`delta ${t.up ? "up" : "down"}`}>{t.delta}</span>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* top bar */}
       <header className="page-header">
         <div className="brand">
-          <div className="brand-mark">
+          {/* <div className="brand-mark">
             <span className="font-display">W</span>
           </div>
-          <span className="brand-name font-display">Wealth Plus</span>
+          <span className="brand-name font-display">Wealth Plus</span> */}
+          <img src={logo} alt="Wealth Plus Logo" className="brand-logo" />
         </div>
-      
       </header>
 
-      {/* main content: hero left, login card right */}
       <main className="main-grid">
-        {/* HERO */}
         <section className="hero">
           <p className="hero-eyebrow font-mono-data">PORTFOLIO INTELLIGENCE</p>
           <h1 className="hero-title font-display">
@@ -166,14 +143,8 @@ export default function Homepage() {
             One ledger for every account — brokerage, retirement, and crypto —
             reconciled nightly and priced in real time.
           </p>
-
-          {/* portfolio summary card */}
-       
-
-      
         </section>
 
-        {/* LOGIN CARD — right corner */}
         <aside className="login-aside">
           <div className="login-card">
             <div className="login-kicker">
@@ -182,16 +153,12 @@ export default function Homepage() {
                 {authMode === "signin" ? "ACCOUNT ACCESS" : "NEW ACCOUNT"}
               </p>
             </div>
+
             <h2 className="login-title font-display">
               {authMode === "signin" ? "Welcome back" : "Open your ledger"}
             </h2>
 
-            <form
-              className="login-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-              }}
-            >
+            <form className="login-form" onSubmit={handleSubmit}>
               <label className="field">
                 <span className="field-label">Email or username</span>
                 <div className="login-field">
@@ -201,6 +168,8 @@ export default function Homepage() {
                     name="identifier"
                     placeholder="you@example.com"
                     autoComplete="username"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
                   />
                 </div>
               </label>
@@ -221,6 +190,8 @@ export default function Homepage() {
                     name="password"
                     placeholder="••••••••••"
                     autoComplete={authMode === "signin" ? "current-password" : "new-password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
@@ -246,11 +217,11 @@ export default function Homepage() {
             </div>
 
             <div className="oauth-grid">
-              <button className="btn-oauth">
+              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("google")}>
                 <GoogleMark />
                 Google
               </button>
-              <button className="btn-oauth">
+              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("apple")}>
                 <AppleMark />
                 Apple
               </button>
@@ -259,15 +230,23 @@ export default function Homepage() {
             <p className="login-footer">
               {authMode === "signin" ? (
                 <>
-                  New to Ledgerline?{" "}
-                  <button onClick={() => setAuthMode("signup")} className="link-gold" style={{ background: "none", border: "none", cursor: "pointer", font: "inherit" }}>
+                  New to Wealth Plus?{" "}
+                  <button
+                    onClick={() => setAuthMode("signup")}
+                    className="link-gold"
+                    style={{ background: "none", border: "none", cursor: "pointer", font: "inherit" }}
+                  >
                     Create an account
                   </button>
                 </>
               ) : (
                 <>
                   Already have an account?{" "}
-                  <button onClick={() => setAuthMode("signin")} className="link-gold" style={{ background: "none", border: "none", cursor: "pointer", font: "inherit" }}>
+                  <button
+                    onClick={() => setAuthMode("signin")}
+                    className="link-gold"
+                    style={{ background: "none", border: "none", cursor: "pointer", font: "inherit" }}
+                  >
                     Sign in
                   </button>
                 </>

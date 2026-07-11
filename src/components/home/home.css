@@ -1,23 +1,4 @@
-/*
-  home.css
-  Companion stylesheet for Homepage.tsx (Ledgerline investment tracker).
 
-  Design tokens
-  ------------------------------------------------------------
-  Ink        #0A0E14  base background
-  Panel      #12181F  card / surface
-  Panel-alt  #0D131A  input / recessed surface
-  Hairline   #232B36  borders
-  Gold       #D4AF6A  accent / primary action
-  Gain       #3FB68B  positive movement
-  Loss       #E1584B  negative movement
-  Paper      #E9E7DF  primary text on dark
-  Muted      #8A93A3  secondary text
-
-  Display face : Fraunces (serif, characterful, used sparingly)
-  Body face    : Inter
-  Data face    : IBM Plex Mono (ticker figures, tabular data)
-*/
 
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
 
@@ -42,7 +23,7 @@
 /* Base                                                          */
 /* ------------------------------------------------------------ */
 
-.ledgerline-page {
+.wealthplus-page {
   background-color: var(--color-ink);
   color: var(--color-paper);
   font-family: var(--font-body);
