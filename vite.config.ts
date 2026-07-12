@@ -6,6 +6,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/api/auth': {
+        target: 'http://localhost:8080/wealth-plus/api/user',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/auth/, ''),
+      },
       '/wealth-plus': {
         target: 'http://localhost:8080',
         changeOrigin: true,

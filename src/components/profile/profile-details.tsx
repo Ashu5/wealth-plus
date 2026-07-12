@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import axios from 'axios';
 import './profile-details.css';
 
 type ProfileDetailsProps = {
@@ -17,15 +18,53 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const storedName = localStorage.getItem('wealth-plus-user') || 'Guest';
-    const storedEmail = localStorage.getItem('wealth-plus-email') || '';
-    const storedFullName = localStorage.getItem('wealth-plus-full-name') || 'Guest User';
-    const storedLastLogin = localStorage.getItem('wealth-plus-last-login') || 'Not available';
+    const loadProfile = async () => {
+      const storedName = localStorage.getItem('wealth-plus-user') || 'Guest';
+      const storedEmail = localStorage.getItem('wealth-plus-email') || '';
+      const storedFullName = localStorage.getItem('wealth-plus-full-name') || 'Guest User';
+      const storedLastLogin = localStorage.getItem('wealth-plus-last-login') || 'Not available';
 
-    setName(storedName);
-    setEmail(storedEmail);
-    setFullName(storedFullName);
-    setLastLogin(storedLastLogin);
+      setName(storedName);
+      setEmail(storedEmail);
+      setFullName(storedFullName);
+      setLastLogin(storedLastLogin);
+
+      if (!storedEmail) {
+        return;
+      }
+
+      try {
+        const response = await axios.get(`/wealth-plus/api/user/profile/${encodeURIComponent(storedEmail)}`, {
+          withCredentials: true,
+        });
+
+        const profileData = response?.data?.data || response?.data || {};
+        const firstName = profileData?.firstName || profileData?.first_name || '';
+        const lastName = profileData?.lastName || profileData?.last_name || '';
+        const resolvedFullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+        if (resolvedFullName) {
+          setFullName(resolvedFullName);
+        }
+
+        if (firstName) {
+          setName(firstName);
+        }
+
+        if (profileData?.email) {
+          setEmail(profileData.email);
+        }
+
+        const profileLastLogin = profileData?.lastLogin || profileData?.lastLoginDate || profileData?.last_login || storedLastLogin;
+        if (profileLastLogin) {
+          setLastLogin(profileLastLogin);
+        }
+      } catch (error) {
+        console.error('Unable to load profile details:', error);
+      }
+    };
+
+    loadProfile();
   }, []);
 
   const handlePasswordChange = (e: FormEvent) => {

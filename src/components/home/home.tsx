@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail, ArrowUpRight } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
+import UserRegistration from "../register/user-registration";
 
 function GoogleMark() {
   return (
@@ -41,8 +43,11 @@ export default function Homepage() {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [registrationMessage, setRegistrationMessage] = useState<string | null>(null);
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (authMode !== "signin") return;
@@ -52,17 +57,48 @@ export default function Homepage() {
 
     if (!emailValue || !passwordValue) return;
 
-    localStorage.setItem("wealth-plus-auth", "true");
-    localStorage.setItem(
-      "wealth-plus-user",
-      emailValue.includes("@") ? emailValue.split("@")[0] : emailValue
-    );
-    localStorage.setItem("wealth-plus-email", emailValue);
-    localStorage.setItem("wealth-plus-full-name", "Admin User");
-    localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
-    localStorage.setItem("wealth-plus-password", passwordValue);
+    try {
+      setIsSubmitting(true);
+      setSignInError(null);
 
-    navigate("/dashboard");
+      const response = await axios.post(
+        "/wealth-plus/api/user/signin",
+        {
+          email: emailValue,
+          password: passwordValue,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response?.status === 200) {
+        localStorage.setItem("wealth-plus-auth", "true");
+        localStorage.setItem(
+          "wealth-plus-user",
+          emailValue.includes("@") ? emailValue.split("@")[0] : emailValue
+        );
+        localStorage.setItem("wealth-plus-email", emailValue);
+        localStorage.setItem("wealth-plus-full-name", "Admin User");
+        localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
+        localStorage.setItem("wealth-plus-password", passwordValue);
+
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Unable to sign in:", error);
+      setSignInError("Unauthorised User. Check Password or Register.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRegistrationSuccess = () => {
+    setRegistrationMessage("You are registered. Log in to access portfolio.");
+    setAuthMode("signin");
   };
 
   const handleOAuthLogin = (provider: "google" | "apple") => {
@@ -155,60 +191,97 @@ export default function Homepage() {
             </div>
 
             <h2 className="login-title font-display">
-              {authMode === "signin" ? "Welcome back" : "Open your ledger"}
+              {authMode === "signin" ? "Welcome back" : "Open door to your portfolio"}
             </h2>
 
-            <form className="login-form" onSubmit={handleSubmit}>
-              <label className="field">
-                <span className="field-label">Email or username</span>
-                <div className="login-field">
-                  <Mail className="icon-sm" />
-                  <input
-                    type="text"
-                    name="identifier"
-                    placeholder="you@example.com"
-                    autoComplete="username"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                  />
-                </div>
-              </label>
+            {authMode === "signin" ? (
+              <>
+                {registrationMessage && (
+                  <div
+                    style={{
+                      marginBottom: 12,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: "rgba(46, 125, 50, 0.12)",
+                      color: "#2e7d32",
+                      fontSize: 13,
+                      border: "1px solid rgba(46, 125, 50, 0.22)",
+                    }}
+                  >
+                    {registrationMessage}
+                  </div>
+                )}
+                {signInError && (
+                  <div
+                    style={{
+                      marginBottom: 12,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: "rgba(198, 40, 40, 0.12)",
+                      color: "#c62828",
+                      fontSize: 13,
+                      border: "1px solid rgba(198, 40, 40, 0.22)",
+                    }}
+                  >
+                    {signInError}
+                  </div>
+                )}
+                <form className="login-form" onSubmit={handleSubmit}>
+                <label className="field">
+                  <span className="field-label">Email or username</span>
+                  <div className="login-field">
+                    <Mail className="icon-sm" />
+                    <input
+                      type="text"
+                      name="identifier"
+                      placeholder="you@example.com"
+                      autoComplete="username"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                    />
+                  </div>
+                </label>
 
-              <label className="field">
-                <div className="field-row">
-                  <span className="field-label">Password</span>
-                  {authMode === "signin" && (
+                <label className="field">
+                  <div className="field-row">
+                    <span className="field-label">Password</span>
                     <a href="#" className="link-gold" style={{ fontSize: 12 }}>
                       Forgot password?
                     </a>
-                  )}
-                </div>
-                <div className="login-field">
-                  <Lock className="icon-sm" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="••••••••••"
-                    autoComplete={authMode === "signin" ? "current-password" : "new-password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((s) => !s)}
-                    className="field-toggle"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
-                  </button>
-                </div>
-              </label>
+                  </div>
+                  <div className="login-field">
+                    <Lock className="icon-sm" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="••••••••••"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      className="field-toggle"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
+                    </button>
+                  </div>
+                </label>
 
-              <button type="submit" className="btn-primary">
-                {authMode === "signin" ? "Sign in" : "Create account"}
-                <ArrowUpRight className="icon-sm" />
-              </button>
-            </form>
+                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? "Signing in..." : "Sign in"}
+                  <ArrowUpRight className="icon-sm" />
+                </button>
+              </form>
+              </>
+            ) : (
+              <UserRegistration
+                onSwitchToLogin={() => setAuthMode("signin")}
+                onRegistrationSuccess={handleRegistrationSuccess}
+              />
+            )}
 
             <div className="divider">
               <div className="line" />
