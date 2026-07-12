@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Mail, ArrowUpRight } from "lucide-react";
+import { Lock, Mail, ArrowUpRight } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
@@ -39,7 +39,6 @@ function AppleMark() {
 
 export default function Homepage() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -62,7 +61,7 @@ export default function Homepage() {
       setSignInError(null);
 
       const response = await axios.post(
-        "/wealth-plus/api/user/signin",
+        "/api/auth/signin",
         {
           email: emailValue,
           password: passwordValue,
@@ -84,15 +83,17 @@ export default function Homepage() {
         localStorage.setItem("wealth-plus-email", emailValue);
         localStorage.setItem("wealth-plus-full-name", "Admin User");
         localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
-        localStorage.setItem("wealth-plus-password", passwordValue);
+        localStorage.removeItem("wealth-plus-password");
 
         navigate("/dashboard");
       }
     } catch (error) {
       console.error("Unable to sign in:", error);
+      setPassword("");
       setSignInError("Unauthorised User. Check Password or Register.");
     } finally {
       setIsSubmitting(false);
+      setPassword("");
     }
   };
 
@@ -252,21 +253,13 @@ export default function Homepage() {
                   <div className="login-field">
                     <Lock className="icon-sm" />
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type="password"
                       name="password"
                       placeholder="••••••••••"
                       autoComplete="current-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      className="field-toggle"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
-                    </button>
                   </div>
                 </label>
 

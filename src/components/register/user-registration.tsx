@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import axios from 'axios';
-import { ArrowUpRight, CheckCircle2, Eye, EyeOff, Lock, Mail, UserRound } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, Lock, Mail, UserRound } from 'lucide-react';
 
 type UserRegistrationProps = {
   onSwitchToLogin: () => void;
@@ -50,7 +50,6 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,7 +96,7 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
     try {
       setIsSubmitting(true);
       const response = await axios.post(
-        '/wealth-plus/api/user/register',
+        '/api/auth/register',
         {
           username,
           password,
@@ -121,14 +120,17 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
         localStorage.setItem('wealth-plus-email', email.trim());
         localStorage.setItem('wealth-plus-full-name', `${firstName.trim()} ${lastName.trim()}`);
         localStorage.setItem('wealth-plus-last-login', new Date().toLocaleString());
-        localStorage.setItem('wealth-plus-password', password);
+        localStorage.removeItem('wealth-plus-password');
+        setPassword('');
         onRegistrationSuccess?.();
       }
     } catch (error) {
       console.error('Unable to register user:', error);
+      setPassword('');
       window.alert('Unable to create account right now.');
     } finally {
       setIsSubmitting(false);
+      setPassword('');
     }
   };
 
@@ -187,7 +189,7 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
         <div className="login-field">
           <Lock className="icon-sm" />
           <input
-            type={showPassword ? 'text' : 'password'}
+            type="password"
             name="password"
             placeholder="••••••••••"
             autoComplete="new-password"
@@ -195,14 +197,6 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword((s) => !s)}
-            className="field-toggle"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-          >
-            {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
-          </button>
         </div>
       </label>
 
