@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const DEMO_CREDENTIALS = {
-  email: 'admin@example.com',
+  email: 'ashu01',
   password: 'password123',
 };
 

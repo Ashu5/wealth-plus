@@ -13,6 +13,10 @@ type InvestmentSummarySectionProps = {
   portfolioGain: number;
   recentEntries: string[];
   onAdd: (stepId: string) => void;
+  onAllocate?: () => void;
+  onTrack?: () => void;
+  onGrow?: () => void;
+  onFundMaster?: () => void;
   steps?: StepDefinition[];
 };
 
@@ -51,11 +55,43 @@ function FlowStepCard({
   step,
   index,
   onAdd,
+  onAllocate,
+  onTrack,
+  onGrow,
+  onFundMaster,
 }: {
   step: StepDefinition;
   index: number;
   onAdd: (stepId: string) => void;
+  onAllocate?: () => void;
+  onTrack?: () => void;
+  onGrow?: () => void;
+  onFundMaster?: () => void;
 }) {
+  const handleClick = () => {
+    if (step.id === 'allocate') {
+      onAllocate?.();
+      return;
+    }
+
+    if (step.id === 'track') {
+      onTrack?.();
+      return;
+    }
+
+    if (step.id === 'grow') {
+      onGrow?.();
+      return;
+    }
+
+    if (step.id === 'fundMaster') {
+      onFundMaster?.();
+      return;
+    }
+
+    onAdd(step.id);
+  };
+
   return (
     <div className="flow-step">
       <div className="flow-node">
@@ -67,7 +103,7 @@ function FlowStepCard({
         </div>
       </div>
 
-      <button type="button" className="flow-action" onClick={() => onAdd(step.id)}>
+      <button type="button" className="flow-action" onClick={handleClick}>
         {step.actionLabel}
       </button>
 
@@ -83,6 +119,10 @@ function InvestmentSummarySection({
   portfolioGain,
   recentEntries,
   onAdd,
+  onAllocate,
+  onTrack,
+  onGrow,
+  onFundMaster,
   steps = defaultSteps,
 }: InvestmentSummarySectionProps) {
   return (
@@ -112,7 +152,16 @@ function InvestmentSummarySection({
 
       <div className="flowchart">
         {steps.map((step, index) => (
-          <FlowStepCard key={step.id} step={step} index={index} onAdd={onAdd} />
+          <FlowStepCard
+            key={step.id}
+            step={step}
+            index={index}
+            onAdd={onAdd}
+            onAllocate={onAllocate}
+            onTrack={onTrack}
+            onGrow={onGrow}
+            onFundMaster={onFundMaster}
+          />
         ))}
       </div>
 

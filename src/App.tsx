@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import LoginComponent from './components/login/login';
 import Dashboard from './components/dashboard/dashboard';
@@ -13,13 +13,7 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 
 function AppShell() {
   const location = useLocation();
-  const navigate = useNavigate();
   const isDashboard = location.pathname === '/dashboard';
-
-  const handleLogout = () => {
-    localStorage.removeItem('wealth-plus-auth');
-    navigate('/login');
-  };
 
   return (
     <>
