@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL = "/wealth-plus/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
+
 
 export const addFund = async (fundData:any) => {
     try {

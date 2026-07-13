@@ -10,6 +10,8 @@ type PortfolioSummarySectionProps = {
   setFundTypeFilter: (value: string) => void;
   monthOptions: string[];
   fundTypeOptions: string[];
+  isLoading?: boolean;
+  error?: string | null;
 };
 
 function FilterBar({
@@ -67,8 +69,24 @@ function PortfolioSummarySection({
   setFundTypeFilter,
   monthOptions,
   fundTypeOptions,
+  isLoading = false,
+  error = null,
 }: PortfolioSummarySectionProps) {
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
+
+  const getStatusBadgeClassName = (row: PortfolioEntry) => {
+    const gain = row.currentValue - row.amount;
+    if (gain < 0) {
+      return 'status negative';
+    }
+
+    if (gain > 0) {
+      return 'status positive';
+    }
+
+    return 'status neutral';
+  };
+
   const columns: TableColumn<PortfolioEntry>[] = [
     {
       name: 'Month',
@@ -77,22 +95,34 @@ function PortfolioSummarySection({
       grow: 1,
     },
     {
-      name: 'Investment',
+      name: 'Fund Name',
       selector: (row) => row.name,
       sortable: true,
       grow: 2,
+      style: {
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
+        minWidth: '220px',
+      },
     },
     {
-      name: 'Folio Number',
+      name: 'Folio #',
       cell: (row) => {
         const folioNumber = (row as PortfolioEntry & { folioNumber?: string }).folioNumber;
-        return folioNumber || '-';
+        return <span style={{ display: 'inline-block', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{folioNumber || '-'}</span>;
       },
       sortable: true,
       grow: 1,
+      style: {
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
+        minWidth: '140px',
+      },
     },
     {
-      name: 'Amount',
+      name: 'Invested',
       cell: (row) => `₹${row.amount.toLocaleString()}`,
       sortable: true,
       sortFunction: (a, b) => a.amount - b.amount,
@@ -114,7 +144,7 @@ function PortfolioSummarySection({
     },
     {
       name: 'Status',
-      cell: (row) => <span className={`status ${row.status.toLowerCase()}`}>{row.status}</span>,
+      cell: (row) => <span className={getStatusBadgeClassName(row)}>{row.status}</span>,
       sortable: true,
       grow: 1,
     },
@@ -162,20 +192,30 @@ function PortfolioSummarySection({
         secondaryLabel="Fund Type"
       />
 
-      <div className="table-wrapper">
-        <DataTable
-          columns={columns}
-          data={entries}
-          pagination
-          paginationPerPage={6}
-          paginationRowsPerPageOptions={[6, 10, 15]}
-          fixedHeader
-          fixedHeaderScrollHeight="320px"
-          dense
-          noDataComponent="No portfolio entries found for the selected filters."
-          customStyles={customStyles}
-        />
-      </div>
+      {isLoading ? (
+        <div className="table-wrapper">
+          <p style={{ padding: '16px 0', color: '#64748b' }}>Loading portfolio summary…</p>
+        </div>
+      ) : error ? (
+        <div className="table-wrapper">
+          <p style={{ padding: '16px 0', color: '#c62828' }}>{error}</p>
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <DataTable
+            columns={columns}
+            data={entries}
+            pagination
+            paginationPerPage={6}
+            paginationRowsPerPageOptions={[6, 10, 15]}
+            fixedHeader
+            fixedHeaderScrollHeight="320px"
+            dense
+            noDataComponent="No portfolio entries found for the selected filters."
+            customStyles={customStyles}
+          />
+        </div>
+      )}
     </section>
   );
 }

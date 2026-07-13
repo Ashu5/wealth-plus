@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import './dashboard.css';
 import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
 import FixedDepositsSummarySection from '../deposit/deposit-summary-section';
@@ -7,10 +7,38 @@ import type { FixedDepositEntry, ModalConfig, PortfolioEntry, StepDefinition } f
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import {addFund} from '../../services/fund-service';
+import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
 import AddAllocationModal from '../allocate/add-allocation-modal';
 import AddTrackingModal from '../track/add-tracking-modal';
 import AddGrowthModal from '../grow/add-growth-modal';
 import AddFundMasterModal from '../fundmaster/add-fund-master-modal';
+
+const formatMonth = (value: string) => {
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value;
+  }
+
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): PortfolioEntry[] => {
+  return payload.funds.flatMap((fund) =>
+    fund.investments.map((investment) => ({
+      id: investment.transactionId,
+      month: formatMonth(investment.transactionDate),
+      investmentType: fund.fundType,
+      bank: '',
+      name: fund.fundName,
+      amount: investment.amountInvested,
+      currentValue: investment.currentValue,
+      status: investment.status,
+      folioNumber: fund.folioNumber,
+    }))
+  );
+};
 
 const initialPortfolioEntries: PortfolioEntry[] = [
   {
@@ -131,6 +159,9 @@ const monthlyModalConfig: ModalConfig = {
 function Dashboard() {
   const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>(initialPortfolioEntries);
   const [fixedDepositEntries, setFixedDepositEntries] = useState<FixedDepositEntry[]>(initialFixedDeposits);
+  const [portfolioSummaryEntries, setPortfolioSummaryEntries] = useState<PortfolioEntry[]>([]);
+  const [portfolioSummaryLoading, setPortfolioSummaryLoading] = useState(true);
+  const [portfolioSummaryError, setPortfolioSummaryError] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState('All');
   const [fundTypeFilter, setFundTypeFilter] = useState('All');
   const [bankFilter, setBankFilter] = useState('All');
@@ -149,17 +180,53 @@ function Dashboard() {
   const [showGrowthModal, setShowGrowthModal] = useState(false);
   const [showFundMasterModal, setShowFundMasterModal] = useState(false);
 
-  const monthOptions = useMemo(() => {
-    const months = Array.from(
-      new Set([
-        ...portfolioEntries.map((item) => item.month),
-        ...fixedDepositEntries.map((item) => item.month),
-      ])
-    ).sort();
-    return ['All', ...months];
-  }, [portfolioEntries, fixedDepositEntries]);
+  useEffect(() => {
+    let isMounted = true;
+    const storedUser =
+      localStorage.getItem('wealth-plus-user')?.trim() ||
+      localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
+      'ashu01';
 
-  const fundTypeOptions = ['All', 'Mutual Fund', 'Fixed Deposit'];
+    const loadPortfolioSummary = async () => {
+      setPortfolioSummaryLoading(true);
+      setPortfolioSummaryError(null);
+
+      try {
+        const payload = await fetchPortfolioSummary(storedUser);
+        if (!isMounted) {
+          return;
+        }
+
+        setPortfolioSummaryEntries(buildPortfolioSummaryEntries(payload));
+      } catch (error) {
+        console.error('Unable to load portfolio summary:', error);
+        if (isMounted) {
+          setPortfolioSummaryEntries([]);
+          setPortfolioSummaryError('Unable to load portfolio summary right now.');
+        }
+      } finally {
+        if (isMounted) {
+          setPortfolioSummaryLoading(false);
+        }
+      }
+    };
+
+    void loadPortfolioSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const monthOptions = useMemo(() => {
+    const months = Array.from(new Set(portfolioSummaryEntries.map((item) => item.month))).sort();
+    return ['All', ...months];
+  }, [portfolioSummaryEntries]);
+
+  const fundTypeOptions = useMemo(() => {
+    const fundTypes = Array.from(new Set(portfolioSummaryEntries.map((item) => item.investmentType))).sort();
+    return ['All', ...fundTypes];
+  }, [portfolioSummaryEntries]);
 
   const bankOptions = useMemo(() => {
     const banks = Array.from(
@@ -178,6 +245,14 @@ function Dashboard() {
       return monthMatch && fundTypeMatch;
     });
   }, [portfolioEntries, monthFilter, fundTypeFilter]);
+
+  const filteredPortfolioSummaryEntries = useMemo(() => {
+    return portfolioSummaryEntries.filter((entry) => {
+      const monthMatch = monthFilter === 'All' || entry.month === monthFilter;
+      const fundTypeMatch = fundTypeFilter === 'All' || entry.investmentType === fundTypeFilter;
+      return monthMatch && fundTypeMatch;
+    });
+  }, [portfolioSummaryEntries, monthFilter, fundTypeFilter]);
 
   const filteredFixedDeposits = useMemo(() => {
     return fixedDepositEntries.filter((entry) => {
@@ -314,7 +389,6 @@ const handleSubmit = async (e: FormEvent) => {
         amount,
         currentValue: Number(formData.currentValue || amount),
         status: 'Growing',
-        // @ts-expect-error - add runtime field for the portfolio table
         folioNumber,
       };
 
@@ -367,13 +441,15 @@ const handleSubmit = async (e: FormEvent) => {
 
         <div className="right-column">
           <PortfolioSummarySection
-            entries={filteredPortfolioEntries}
+            entries={filteredPortfolioSummaryEntries}
             monthFilter={monthFilter}
             setMonthFilter={setMonthFilter}
             fundTypeFilter={fundTypeFilter}
             setFundTypeFilter={setFundTypeFilter}
             monthOptions={monthOptions}
             fundTypeOptions={fundTypeOptions}
+            isLoading={portfolioSummaryLoading}
+            error={portfolioSummaryError}
           />
 
           <FixedDepositsSummarySection

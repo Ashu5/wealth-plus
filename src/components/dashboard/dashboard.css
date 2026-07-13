@@ -271,6 +271,21 @@ th {
   font-weight: 700;
 }
 
+.status.positive {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.status.negative {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.status.neutral {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
 .status.growing {
   background: #ecfdf5;
   color: #047857;
