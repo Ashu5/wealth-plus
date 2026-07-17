@@ -1,10 +1,12 @@
 import { useId, useState } from 'react';
 import DataTable, { type TableColumn } from 'react-data-table-component';
 import type { PortfolioEntry } from '../dashboard/types';
+import FundDetailsModal from '../modal/fund-details-modal';
 import './portfolio-summary-section.css';
 
 type PortfolioSummarySectionProps = {
   entries: PortfolioEntry[];
+  allEntries?: PortfolioEntry[];
   fundTypeFilter: string;
   setFundTypeFilter: (value: string) => void;
   fundTypeOptions: string[];
@@ -43,6 +45,7 @@ function FilterBar({
 
 function PortfolioSummarySection({
   entries,
+  allEntries,
   fundTypeFilter,
   setFundTypeFilter,
   fundTypeOptions,
@@ -50,25 +53,8 @@ function PortfolioSummarySection({
   error = null,
 }: PortfolioSummarySectionProps) {
   const [selectedFund, setSelectedFund] = useState<PortfolioEntry | null>(null);
-  const [modalMonthFilter, setModalMonthFilter] = useState('All');
 
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
-
-  const getModalMonthOptions = () => {
-    if (!selectedFund) return ['All'];
-    const fundEntries = entries.filter((e) => e.name === selectedFund.name);
-    const months = Array.from(new Set(fundEntries.map((item) => item.month))).sort();
-    return ['All', ...months];
-  };
-
-  const getFilteredModalEntries = () => {
-    if (!selectedFund) return [];
-    return entries.filter((e) => {
-      const nameMatch = e.name === selectedFund.name;
-      const monthMatch = modalMonthFilter === 'All' || e.month === modalMonthFilter;
-      return nameMatch && monthMatch;
-    });
-  };
 
   const getStatusBadgeClassName = (row: PortfolioEntry) => {
     const gain = row.currentValue - row.amount;
@@ -185,53 +171,12 @@ function PortfolioSummarySection({
         secondaryLabel="Fund Type"
       />
 
-      {selectedFund && (
-        <div className="modal-backdrop" onClick={() => setSelectedFund(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h3>{selectedFund.name}</h3>
-                <p className="modal-subtitle">Fund Transactions</p>
-              </div>
-              <button type="button" className="modal-close" onClick={() => setSelectedFund(null)}>
-                ×
-              </button>
-            </div>
-
-            <div className="filter-bar" style={{ marginBottom: '16px' }}>
-              <div className="filter-control">
-                <label htmlFor="modal-month-filter">Month</label>
-                <select
-                  id="modal-month-filter"
-                  value={modalMonthFilter}
-                  onChange={(e) => setModalMonthFilter(e.target.value)}
-                >
-                  {getModalMonthOptions().map((month) => (
-                    <option key={month} value={month}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="modal-table-wrapper">
-              <DataTable
-                columns={columns}
-                data={getFilteredModalEntries()}
-                pagination
-                paginationPerPage={6}
-                paginationRowsPerPageOptions={[6, 10, 15]}
-                fixedHeader
-                fixedHeaderScrollHeight="320px"
-                dense
-                noDataComponent="No transactions found for this fund."
-                customStyles={customStyles}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <FundDetailsModal
+        selectedFund={selectedFund}
+        entries={entries}
+        allEntries={allEntries}
+        onClose={() => setSelectedFund(null)}
+      />
 
       {isLoading ? (
         <div className="table-wrapper">

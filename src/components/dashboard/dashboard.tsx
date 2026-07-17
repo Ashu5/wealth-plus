@@ -46,6 +46,8 @@ const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): Por
         currentValue: investment.currentValue,
         status: investment.status,
         folioNumber: fund.folioNumber || '',
+        nav: fund.currentNav,
+        units: investment.units,
       }));
     }
 
@@ -60,6 +62,8 @@ const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): Por
       currentValue: fund.currentValue,
       status: fund.status,
       folioNumber: fund.folioNumber || '',
+      nav: fund.currentNav,
+      units: fund.totalUnits,
     };
   }).flat();
 };
@@ -74,6 +78,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 25000,
     currentValue: 30250,
     status: 'Growing',
+    nav: 124.80,
+    units: 200.32,
   },
   {
     id: 'p2',
@@ -84,6 +90,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 18000,
     currentValue: 19140,
     status: 'Stable',
+    nav: 103.54,
+    units: 173.81,
   },
   {
     id: 'p3',
@@ -94,6 +102,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 12000,
     currentValue: 13800,
     status: 'Growing',
+    nav: 115.00,
+    units: 104.35,
   },
   {
     id: 'p4',
@@ -104,6 +114,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 8000,
     currentValue: 8240,
     status: 'Stable',
+    nav: 103.00,
+    units: 77.67,
   },
 ];
 
@@ -478,6 +490,7 @@ const handleSubmit = async (e: FormEvent) => {
         <div className="right-column">
           <PortfolioSummarySection
             entries={filteredPortfolioSummaryEntries}
+            allEntries={portfolioSummaryEntries}
             fundTypeFilter={fundTypeFilter}
             setFundTypeFilter={setFundTypeFilter}
             fundTypeOptions={fundTypeOptions}

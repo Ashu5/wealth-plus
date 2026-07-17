@@ -10,6 +10,8 @@ export type PortfolioEntry = {
   currentValue: number;
   status: string;
   folioNumber?: string;
+  nav?: number;
+  units?: number;
 };
 
 export type FixedDepositEntry = {
