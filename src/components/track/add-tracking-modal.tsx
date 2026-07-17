@@ -7,6 +7,7 @@ import { getUserFunds } from '../../services/fund-service';
 type AddTrackingModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 };
 
 type FundOption = {
@@ -25,7 +26,7 @@ type FundResponseItem = {
   } | null;
 };
 
-function AddTrackingModal({ isOpen, onClose }: AddTrackingModalProps) {
+function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps) {
   const [trackingData, setTrackingData] = useState({
     fundName: '',
     fundCode: '',
@@ -47,9 +48,8 @@ function AddTrackingModal({ isOpen, onClose }: AddTrackingModalProps) {
     }
 
     const loadFunds = async () => {
-      const storedUser = localStorage.getItem('wealth-plus-user')?.trim();
-      const storedEmail = localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim();
-      const candidateUsers = [storedUser, storedEmail, 'ashu01', 'ashu'].filter(
+      const storedUser = localStorage.getItem('wealth-plus-username')?.trim()|| localStorage.getItem('wealth-plus-email')?.trim();
+      const candidateUsers = [storedUser].filter(
         (value): value is string => Boolean(value)
       );
 
@@ -106,6 +106,21 @@ function AddTrackingModal({ isOpen, onClose }: AddTrackingModalProps) {
     loadFunds();
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!trackingData.amount || !trackingData.nav) {
+      setTrackingData((prev) => ({ ...prev, units: '' }));
+      return;
+    }
+
+    const amount = Number(trackingData.amount);
+    const nav = Number(trackingData.nav);
+
+    if (amount > 0 && nav > 0) {
+      const calculatedUnits = (amount / nav).toFixed(3);
+      setTrackingData((prev) => ({ ...prev, units: calculatedUnits }));
+    }
+  }, [trackingData.amount, trackingData.nav]);
+
   if (!isOpen) {
     return null;
   }
@@ -139,10 +154,24 @@ function AddTrackingModal({ isOpen, onClose }: AddTrackingModalProps) {
     setTrackingData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCancel = () => {
+    setTrackingData({
+      fundName: '',
+      fundCode: '',
+      amount: '',
+      nav: '',
+      units: '',
+      userId: '',
+      folioNumber: '',
+    });
+    setSelectedDate(new Date());
+    onClose();
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const currentUser = localStorage.getItem('wealth-plus-user')?.trim() || localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() || 'ashu01';
+    const currentUser = localStorage.getItem('wealth-plus-username')?.trim() || localStorage.getItem('wealth-plus-username')?.split('@')[0]?.trim() || 'ashu01';
 
     const payload = {
       folioNumber: trackingData.folioNumber || '002',
@@ -154,6 +183,7 @@ function AddTrackingModal({ isOpen, onClose }: AddTrackingModalProps) {
       units: Number(trackingData.units),
       userId: currentUser,
     };
+    console.log('Submitting payload:', payload);
 
     try {
       setIsSubmitting(true);
@@ -164,7 +194,18 @@ function AddTrackingModal({ isOpen, onClose }: AddTrackingModalProps) {
       });
 
       if (response?.status === 200 || response?.status === 201) {
+        setTrackingData({
+          fundName: '',
+          fundCode: '',
+          amount: '',
+          nav: '',
+          units: '',
+          userId: '',
+          folioNumber: '',
+        });
+        setSelectedDate(new Date());
         setSuccessMessage('Transaction added successfully.');
+        onSuccess?.();
         window.setTimeout(() => {
           setSuccessMessage('');
           onClose();
@@ -278,26 +319,26 @@ function AddTrackingModal({ isOpen, onClose }: AddTrackingModalProps) {
               type="number"
               step="0.01"
               value={trackingData.units}
-              onChange={handleChange}
               placeholder="12.22"
+              readOnly
               required
             />
           </div>
 
-          {successMessage && (
-            <div className="success-message" role="status" aria-live="polite">
-              {successMessage}
-            </div>
-          )}
-
           <div className="modal-actions">
-            <button type="button" className="cancel-btn" onClick={onClose}>
+            <button type="button" className="cancel-btn" onClick={handleCancel}>
               Cancel
             </button>
             <button type="submit" className="save-btn" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save Tracking'}
             </button>
           </div>
+
+          {successMessage && (
+            <div className="modal-success-message" role="status" aria-live="polite">
+              ✓ {successMessage}
+            </div>
+          )}
         </form>
       </div>
     </div>

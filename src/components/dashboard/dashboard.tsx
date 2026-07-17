@@ -25,19 +25,43 @@ const formatMonth = (value: string) => {
 };
 
 const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): PortfolioEntry[] => {
-  return payload.funds.flatMap((fund) =>
-    fund.investments.map((investment) => ({
-      id: investment.transactionId,
-      month: formatMonth(investment.transactionDate),
-      investmentType: fund.fundType,
+  if (!payload || !Array.isArray(payload.funds)) {
+    console.warn('Invalid portfolio summary response structure:', payload);
+    return [];
+  }
+
+  const today = new Date();
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+  return payload.funds.map((fund) => {
+    // If fund has investments array, flatten it
+    if (Array.isArray(fund.investments) && fund.investments.length > 0) {
+      return fund.investments.map((investment) => ({
+        id: investment.transactionId,
+        month: formatMonth(investment.transactionDate),
+        investmentType: fund.fundType || 'Mutual Fund',
+        bank: '',
+        name: fund.fundName,
+        amount: investment.amountInvested,
+        currentValue: investment.currentValue,
+        status: investment.status,
+        folioNumber: fund.folioNumber || '',
+      }));
+    }
+
+    // If no investments array, create a single entry from the fund summary
+    return {
+      id: `${fund.fundName}-${currentMonth}`,
+      month: currentMonth,
+      investmentType: fund.fundType || 'Mutual Fund',
       bank: '',
       name: fund.fundName,
-      amount: investment.amountInvested,
-      currentValue: investment.currentValue,
-      status: investment.status,
-      folioNumber: fund.folioNumber,
-    }))
-  );
+      amount: fund.amountInvested,
+      currentValue: fund.currentValue,
+      status: fund.status,
+      folioNumber: fund.folioNumber || '',
+    };
+  }).flat();
 };
 
 const initialPortfolioEntries: PortfolioEntry[] = [
@@ -180,38 +204,45 @@ function Dashboard() {
   const [showGrowthModal, setShowGrowthModal] = useState(false);
   const [showFundMasterModal, setShowFundMasterModal] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadPortfolioSummary = async () => {
     const storedUser =
+      localStorage.getItem('wealth-plus-username')?.trim() ||
       localStorage.getItem('wealth-plus-user')?.trim() ||
       localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
       'ashu01';
 
-    const loadPortfolioSummary = async () => {
-      setPortfolioSummaryLoading(true);
-      setPortfolioSummaryError(null);
+    console.log('Loading portfolio summary for user:', storedUser);
 
-      try {
-        const payload = await fetchPortfolioSummary(storedUser);
-        if (!isMounted) {
-          return;
-        }
+    setPortfolioSummaryLoading(true);
+    setPortfolioSummaryError(null);
 
-        setPortfolioSummaryEntries(buildPortfolioSummaryEntries(payload));
-      } catch (error) {
-        console.error('Unable to load portfolio summary:', error);
-        if (isMounted) {
-          setPortfolioSummaryEntries([]);
-          setPortfolioSummaryError('Unable to load portfolio summary right now.');
-        }
-      } finally {
-        if (isMounted) {
-          setPortfolioSummaryLoading(false);
-        }
+    try {
+      const payload = await fetchPortfolioSummary(storedUser);
+      console.log('Portfolio summary API response:', payload);
+      setPortfolioSummaryEntries(buildPortfolioSummaryEntries(payload));
+    } catch (error) {
+      console.error('Error loading portfolio summary:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error details:', errorMessage);
+      setPortfolioSummaryEntries([]);
+      setPortfolioSummaryError('Unable to load portfolio summary right now.');
+    } finally {
+      setPortfolioSummaryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSummaryIfMounted = async () => {
+      if (!isMounted) {
+        return;
       }
+
+      await loadPortfolioSummary();
     };
 
-    void loadPortfolioSummary();
+    void loadSummaryIfMounted();
 
     return () => {
       isMounted = false;
@@ -248,11 +279,10 @@ function Dashboard() {
 
   const filteredPortfolioSummaryEntries = useMemo(() => {
     return portfolioSummaryEntries.filter((entry) => {
-      const monthMatch = monthFilter === 'All' || entry.month === monthFilter;
       const fundTypeMatch = fundTypeFilter === 'All' || entry.investmentType === fundTypeFilter;
-      return monthMatch && fundTypeMatch;
+      return fundTypeMatch;
     });
-  }, [portfolioSummaryEntries, monthFilter, fundTypeFilter]);
+  }, [portfolioSummaryEntries, fundTypeFilter]);
 
   const filteredFixedDeposits = useMemo(() => {
     return fixedDepositEntries.filter((entry) => {
@@ -420,7 +450,13 @@ const handleSubmit = async (e: FormEvent) => {
       )}
 
       <AddAllocationModal isOpen={showAllocationModal} onClose={() => setShowAllocationModal(false)} />
-      <AddTrackingModal isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} />
+      <AddTrackingModal
+        isOpen={showTrackingModal}
+        onClose={() => setShowTrackingModal(false)}
+        onSuccess={() => {
+          void loadPortfolioSummary();
+        }}
+      />
       <AddGrowthModal isOpen={showGrowthModal} onClose={() => setShowGrowthModal(false)} />
       <AddFundMasterModal isOpen={showFundMasterModal} onClose={() => setShowFundMasterModal(false)} />
 
@@ -442,11 +478,8 @@ const handleSubmit = async (e: FormEvent) => {
         <div className="right-column">
           <PortfolioSummarySection
             entries={filteredPortfolioSummaryEntries}
-            monthFilter={monthFilter}
-            setMonthFilter={setMonthFilter}
             fundTypeFilter={fundTypeFilter}
             setFundTypeFilter={setFundTypeFilter}
-            monthOptions={monthOptions}
             fundTypeOptions={fundTypeOptions}
             isLoading={portfolioSummaryLoading}
             error={portfolioSummaryError}

@@ -1,52 +1,32 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import DataTable, { type TableColumn } from 'react-data-table-component';
 import type { PortfolioEntry } from '../dashboard/types';
+import './portfolio-summary-section.css';
 
 type PortfolioSummarySectionProps = {
   entries: PortfolioEntry[];
-  monthFilter: string;
-  setMonthFilter: (value: string) => void;
   fundTypeFilter: string;
   setFundTypeFilter: (value: string) => void;
-  monthOptions: string[];
   fundTypeOptions: string[];
   isLoading?: boolean;
   error?: string | null;
 };
 
 function FilterBar({
-  monthFilter,
-  setMonthFilter,
   secondaryFilter,
   setSecondaryFilter,
-  monthOptions,
   secondaryOptions,
   secondaryLabel,
 }: {
-  monthFilter: string;
-  setMonthFilter: (value: string) => void;
   secondaryFilter: string;
   setSecondaryFilter: (value: string) => void;
-  monthOptions: string[];
   secondaryOptions: string[];
   secondaryLabel: string;
 }) {
-  const monthId = useId();
   const secondaryId = useId();
 
   return (
     <div className="filter-bar">
-      <div className="filter-control">
-        <label htmlFor={monthId}>Month</label>
-        <select id={monthId} value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
-          {monthOptions.map((month) => (
-            <option key={month} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div className="filter-control">
         <label htmlFor={secondaryId}>{secondaryLabel}</label>
         <select id={secondaryId} value={secondaryFilter} onChange={(e) => setSecondaryFilter(e.target.value)}>
@@ -63,16 +43,32 @@ function FilterBar({
 
 function PortfolioSummarySection({
   entries,
-  monthFilter,
-  setMonthFilter,
   fundTypeFilter,
   setFundTypeFilter,
-  monthOptions,
   fundTypeOptions,
   isLoading = false,
   error = null,
 }: PortfolioSummarySectionProps) {
+  const [selectedFund, setSelectedFund] = useState<PortfolioEntry | null>(null);
+  const [modalMonthFilter, setModalMonthFilter] = useState('All');
+
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
+
+  const getModalMonthOptions = () => {
+    if (!selectedFund) return ['All'];
+    const fundEntries = entries.filter((e) => e.name === selectedFund.name);
+    const months = Array.from(new Set(fundEntries.map((item) => item.month))).sort();
+    return ['All', ...months];
+  };
+
+  const getFilteredModalEntries = () => {
+    if (!selectedFund) return [];
+    return entries.filter((e) => {
+      const nameMatch = e.name === selectedFund.name;
+      const monthMatch = modalMonthFilter === 'All' || e.month === modalMonthFilter;
+      return nameMatch && monthMatch;
+    });
+  };
 
   const getStatusBadgeClassName = (row: PortfolioEntry) => {
     const gain = row.currentValue - row.amount;
@@ -183,14 +179,59 @@ function PortfolioSummarySection({
       </div>
 
       <FilterBar
-        monthFilter={monthFilter}
-        setMonthFilter={setMonthFilter}
         secondaryFilter={fundTypeFilter}
         setSecondaryFilter={setFundTypeFilter}
-        monthOptions={monthOptions}
         secondaryOptions={fundTypeOptions}
         secondaryLabel="Fund Type"
       />
+
+      {selectedFund && (
+        <div className="modal-backdrop" onClick={() => setSelectedFund(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3>{selectedFund.name}</h3>
+                <p className="modal-subtitle">Fund Transactions</p>
+              </div>
+              <button type="button" className="modal-close" onClick={() => setSelectedFund(null)}>
+                ×
+              </button>
+            </div>
+
+            <div className="filter-bar" style={{ marginBottom: '16px' }}>
+              <div className="filter-control">
+                <label htmlFor="modal-month-filter">Month</label>
+                <select
+                  id="modal-month-filter"
+                  value={modalMonthFilter}
+                  onChange={(e) => setModalMonthFilter(e.target.value)}
+                >
+                  {getModalMonthOptions().map((month) => (
+                    <option key={month} value={month}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="modal-table-wrapper">
+              <DataTable
+                columns={columns}
+                data={getFilteredModalEntries()}
+                pagination
+                paginationPerPage={6}
+                paginationRowsPerPageOptions={[6, 10, 15]}
+                fixedHeader
+                fixedHeaderScrollHeight="320px"
+                dense
+                noDataComponent="No transactions found for this fund."
+                customStyles={customStyles}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="table-wrapper">
@@ -213,6 +254,8 @@ function PortfolioSummarySection({
             dense
             noDataComponent="No portfolio entries found for the selected filters."
             customStyles={customStyles}
+            onRowClicked={(row) => setSelectedFund(row)}
+            pointerOnHover
           />
         </div>
       )}
