@@ -1,50 +1,34 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import DataTable, { type TableColumn } from 'react-data-table-component';
 import type { PortfolioEntry } from '../dashboard/types';
+import FundDetailsModal from '../modal/fund-details-modal';
+import './portfolio-summary-section.css';
 
 type PortfolioSummarySectionProps = {
   entries: PortfolioEntry[];
-  monthFilter: string;
-  setMonthFilter: (value: string) => void;
+  allEntries?: PortfolioEntry[];
   fundTypeFilter: string;
   setFundTypeFilter: (value: string) => void;
-  monthOptions: string[];
   fundTypeOptions: string[];
+  isLoading?: boolean;
+  error?: string | null;
 };
 
 function FilterBar({
-  monthFilter,
-  setMonthFilter,
   secondaryFilter,
   setSecondaryFilter,
-  monthOptions,
   secondaryOptions,
   secondaryLabel,
 }: {
-  monthFilter: string;
-  setMonthFilter: (value: string) => void;
   secondaryFilter: string;
   setSecondaryFilter: (value: string) => void;
-  monthOptions: string[];
   secondaryOptions: string[];
   secondaryLabel: string;
 }) {
-  const monthId = useId();
   const secondaryId = useId();
 
   return (
     <div className="filter-bar">
-      <div className="filter-control">
-        <label htmlFor={monthId}>Month</label>
-        <select id={monthId} value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}>
-          {monthOptions.map((month) => (
-            <option key={month} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div className="filter-control">
         <label htmlFor={secondaryId}>{secondaryLabel}</label>
         <select id={secondaryId} value={secondaryFilter} onChange={(e) => setSecondaryFilter(e.target.value)}>
@@ -61,14 +45,30 @@ function FilterBar({
 
 function PortfolioSummarySection({
   entries,
-  monthFilter,
-  setMonthFilter,
+  allEntries,
   fundTypeFilter,
   setFundTypeFilter,
-  monthOptions,
   fundTypeOptions,
+  isLoading = false,
+  error = null,
 }: PortfolioSummarySectionProps) {
+  const [selectedFund, setSelectedFund] = useState<PortfolioEntry | null>(null);
+
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
+
+  const getStatusBadgeClassName = (row: PortfolioEntry) => {
+    const gain = row.currentValue - row.amount;
+    if (gain < 0) {
+      return 'status negative';
+    }
+
+    if (gain > 0) {
+      return 'status positive';
+    }
+
+    return 'status neutral';
+  };
+
   const columns: TableColumn<PortfolioEntry>[] = [
     {
       name: 'Month',
@@ -77,22 +77,34 @@ function PortfolioSummarySection({
       grow: 1,
     },
     {
-      name: 'Investment',
+      name: 'Fund Name',
       selector: (row) => row.name,
       sortable: true,
       grow: 2,
+      style: {
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
+        minWidth: '220px',
+      },
     },
     {
-      name: 'Folio Number',
+      name: 'Folio #',
       cell: (row) => {
         const folioNumber = (row as PortfolioEntry & { folioNumber?: string }).folioNumber;
-        return folioNumber || '-';
+        return <span style={{ display: 'inline-block', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{folioNumber || '-'}</span>;
       },
       sortable: true,
       grow: 1,
+      style: {
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
+        minWidth: '140px',
+      },
     },
     {
-      name: 'Amount',
+      name: 'Invested',
       cell: (row) => `₹${row.amount.toLocaleString()}`,
       sortable: true,
       sortFunction: (a, b) => a.amount - b.amount,
@@ -114,7 +126,7 @@ function PortfolioSummarySection({
     },
     {
       name: 'Status',
-      cell: (row) => <span className={`status ${row.status.toLowerCase()}`}>{row.status}</span>,
+      cell: (row) => <span className={getStatusBadgeClassName(row)}>{row.status}</span>,
       sortable: true,
       grow: 1,
     },
@@ -153,29 +165,45 @@ function PortfolioSummarySection({
       </div>
 
       <FilterBar
-        monthFilter={monthFilter}
-        setMonthFilter={setMonthFilter}
         secondaryFilter={fundTypeFilter}
         setSecondaryFilter={setFundTypeFilter}
-        monthOptions={monthOptions}
         secondaryOptions={fundTypeOptions}
         secondaryLabel="Fund Type"
       />
 
-      <div className="table-wrapper">
-        <DataTable
-          columns={columns}
-          data={entries}
-          pagination
-          paginationPerPage={6}
-          paginationRowsPerPageOptions={[6, 10, 15]}
-          fixedHeader
-          fixedHeaderScrollHeight="320px"
-          dense
-          noDataComponent="No portfolio entries found for the selected filters."
-          customStyles={customStyles}
-        />
-      </div>
+      <FundDetailsModal
+        selectedFund={selectedFund}
+        entries={entries}
+        allEntries={allEntries}
+        onClose={() => setSelectedFund(null)}
+      />
+
+      {isLoading ? (
+        <div className="table-wrapper">
+          <p style={{ padding: '16px 0', color: '#64748b' }}>Loading portfolio summary…</p>
+        </div>
+      ) : error ? (
+        <div className="table-wrapper">
+          <p style={{ padding: '16px 0', color: '#c62828' }}>{error}</p>
+        </div>
+      ) : (
+        <div className="table-wrapper">
+          <DataTable
+            columns={columns}
+            data={entries}
+            pagination
+            paginationPerPage={6}
+            paginationRowsPerPageOptions={[6, 10, 15]}
+            fixedHeader
+            fixedHeaderScrollHeight="320px"
+            dense
+            noDataComponent="No portfolio entries found for the selected filters."
+            customStyles={customStyles}
+            onRowClicked={(row) => setSelectedFund(row)}
+            pointerOnHover
+          />
+        </div>
+      )}
     </section>
   );
 }

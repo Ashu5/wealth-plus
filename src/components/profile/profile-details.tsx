@@ -8,6 +8,7 @@ type ProfileDetailsProps = {
 
 function ProfileDetails({ onClose }: ProfileDetailsProps) {
   const [name, setName] = useState('Guest');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('Guest User');
   const [lastLogin, setLastLogin] = useState('Not available');
@@ -17,14 +18,23 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
 
+  const setCookie = (name: string, value: string, days: number = 30) => {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    const cookieString = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    document.cookie = cookieString;
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       const storedName = localStorage.getItem('wealth-plus-user') || 'Guest';
+      const storedUsername = localStorage.getItem('wealth-plus-username') || '';
       const storedEmail = localStorage.getItem('wealth-plus-email') || '';
       const storedFullName = localStorage.getItem('wealth-plus-full-name') || 'Guest User';
       const storedLastLogin = localStorage.getItem('wealth-plus-last-login') || 'Not available';
 
       setName(storedName);
+      setUsername(storedUsername);
       setEmail(storedEmail);
       setFullName(storedFullName);
       setLastLogin(storedLastLogin);
@@ -42,6 +52,7 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
         const firstName = profileData?.firstName || profileData?.first_name || '';
         const lastName = profileData?.lastName || profileData?.last_name || '';
         const resolvedFullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+        const profileUsername = profileData?.username || profileData?.userName || '';
 
         if (resolvedFullName) {
           setFullName(resolvedFullName);
@@ -53,6 +64,12 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
 
         if (profileData?.email) {
           setEmail(profileData.email);
+        }
+
+        if (profileUsername) {
+          setUsername(profileUsername);
+          localStorage.setItem('wealth-plus-username', profileUsername);
+          setCookie('wealth-plus-username', profileUsername);
         }
 
         const profileLastLogin = profileData?.lastLogin || profileData?.lastLoginDate || profileData?.last_login || storedLastLogin;
@@ -108,6 +125,11 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
         </div>
 
         <div className="profile-details-body">
+          <div className="profile-detail-row">
+            <span className="profile-detail-label">Username</span>
+            <span className="profile-detail-value">{username || 'Not available'}</span>
+          </div>
+
           <div className="profile-detail-row">
             <span className="profile-detail-label">Name</span>
             <span className="profile-detail-value">{name}</span>

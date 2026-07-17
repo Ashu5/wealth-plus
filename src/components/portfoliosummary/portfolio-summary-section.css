@@ -1,8 +1,59 @@
+.table-card {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.table-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  margin: 16px 0;
+}
+
+.filter-control {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.filter-control label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.filter-control select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
 .table-wrapper {
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-wrapper .rdt_Table {
+  min-width: 760px;
+  width: 100%;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
@@ -15,4 +66,46 @@
 .table-wrapper .rdt_Pagination {
   border-top: 1px solid #e2e8f0;
   padding-top: 12px;
+}
+
+.table-wrapper .rdt_TableBody {
+  width: 100%;
+}
+
+.table-wrapper .rdt_TableCell,
+.table-wrapper .rdt_TableCol {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .table-header {
+    align-items: flex-start;
+  }
+
+  .pill {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.modal-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.modal-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-table-wrapper .rdt_Table {
+  min-width: 760px;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
 }

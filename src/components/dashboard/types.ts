@@ -1,14 +1,17 @@
-export type InvestmentKind = 'Mutual Fund' | 'Fixed Deposit';
+export type InvestmentKind = string;
 
 export type PortfolioEntry = {
   id: string;
   month: string;
-  investmentType: InvestmentKind;
+  investmentType: string;
   bank: string;
   name: string;
   amount: number;
   currentValue: number;
-  status: 'Growing' | 'Stable';
+  status: string;
+  folioNumber?: string;
+  nav?: number;
+  units?: number;
 };
 
 export type FixedDepositEntry = {

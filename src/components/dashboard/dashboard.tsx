@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import './dashboard.css';
 import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
 import FixedDepositsSummarySection from '../deposit/deposit-summary-section';
@@ -7,10 +7,66 @@ import type { FixedDepositEntry, ModalConfig, PortfolioEntry, StepDefinition } f
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import {addFund} from '../../services/fund-service';
+import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
 import AddAllocationModal from '../allocate/add-allocation-modal';
 import AddTrackingModal from '../track/add-tracking-modal';
 import AddGrowthModal from '../grow/add-growth-modal';
 import AddFundMasterModal from '../fundmaster/add-fund-master-modal';
+
+const formatMonth = (value: string) => {
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value;
+  }
+
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): PortfolioEntry[] => {
+  if (!payload || !Array.isArray(payload.funds)) {
+    console.warn('Invalid portfolio summary response structure:', payload);
+    return [];
+  }
+
+  const today = new Date();
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+  return payload.funds.map((fund) => {
+    // If fund has investments array, flatten it
+    if (Array.isArray(fund.investments) && fund.investments.length > 0) {
+      return fund.investments.map((investment) => ({
+        id: investment.transactionId,
+        month: formatMonth(investment.transactionDate),
+        investmentType: fund.fundType || 'Mutual Fund',
+        bank: '',
+        name: fund.fundName,
+        amount: investment.amountInvested,
+        currentValue: investment.currentValue,
+        status: investment.status,
+        folioNumber: fund.folioNumber || '',
+        nav: fund.currentNav,
+        units: investment.units,
+      }));
+    }
+
+    // If no investments array, create a single entry from the fund summary
+    return {
+      id: `${fund.fundName}-${currentMonth}`,
+      month: currentMonth,
+      investmentType: fund.fundType || 'Mutual Fund',
+      bank: '',
+      name: fund.fundName,
+      amount: fund.amountInvested,
+      currentValue: fund.currentValue,
+      status: fund.status,
+      folioNumber: fund.folioNumber || '',
+      nav: fund.currentNav,
+      units: fund.totalUnits,
+    };
+  }).flat();
+};
 
 const initialPortfolioEntries: PortfolioEntry[] = [
   {
@@ -22,6 +78,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 25000,
     currentValue: 30250,
     status: 'Growing',
+    nav: 124.80,
+    units: 200.32,
   },
   {
     id: 'p2',
@@ -32,6 +90,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 18000,
     currentValue: 19140,
     status: 'Stable',
+    nav: 103.54,
+    units: 173.81,
   },
   {
     id: 'p3',
@@ -42,6 +102,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 12000,
     currentValue: 13800,
     status: 'Growing',
+    nav: 115.00,
+    units: 104.35,
   },
   {
     id: 'p4',
@@ -52,6 +114,8 @@ const initialPortfolioEntries: PortfolioEntry[] = [
     amount: 8000,
     currentValue: 8240,
     status: 'Stable',
+    nav: 103.00,
+    units: 77.67,
   },
 ];
 
@@ -131,6 +195,9 @@ const monthlyModalConfig: ModalConfig = {
 function Dashboard() {
   const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>(initialPortfolioEntries);
   const [fixedDepositEntries, setFixedDepositEntries] = useState<FixedDepositEntry[]>(initialFixedDeposits);
+  const [portfolioSummaryEntries, setPortfolioSummaryEntries] = useState<PortfolioEntry[]>([]);
+  const [portfolioSummaryLoading, setPortfolioSummaryLoading] = useState(true);
+  const [portfolioSummaryError, setPortfolioSummaryError] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState('All');
   const [fundTypeFilter, setFundTypeFilter] = useState('All');
   const [bankFilter, setBankFilter] = useState('All');
@@ -149,17 +216,60 @@ function Dashboard() {
   const [showGrowthModal, setShowGrowthModal] = useState(false);
   const [showFundMasterModal, setShowFundMasterModal] = useState(false);
 
-  const monthOptions = useMemo(() => {
-    const months = Array.from(
-      new Set([
-        ...portfolioEntries.map((item) => item.month),
-        ...fixedDepositEntries.map((item) => item.month),
-      ])
-    ).sort();
-    return ['All', ...months];
-  }, [portfolioEntries, fixedDepositEntries]);
+  const loadPortfolioSummary = async () => {
+    const storedUser =
+      localStorage.getItem('wealth-plus-username')?.trim() ||
+      localStorage.getItem('wealth-plus-user')?.trim() ||
+      localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
+      'ashu01';
 
-  const fundTypeOptions = ['All', 'Mutual Fund', 'Fixed Deposit'];
+    console.log('Loading portfolio summary for user:', storedUser);
+
+    setPortfolioSummaryLoading(true);
+    setPortfolioSummaryError(null);
+
+    try {
+      const payload = await fetchPortfolioSummary(storedUser);
+      console.log('Portfolio summary API response:', payload);
+      setPortfolioSummaryEntries(buildPortfolioSummaryEntries(payload));
+    } catch (error) {
+      console.error('Error loading portfolio summary:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error details:', errorMessage);
+      setPortfolioSummaryEntries([]);
+      setPortfolioSummaryError('Unable to load portfolio summary right now.');
+    } finally {
+      setPortfolioSummaryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSummaryIfMounted = async () => {
+      if (!isMounted) {
+        return;
+      }
+
+      await loadPortfolioSummary();
+    };
+
+    void loadSummaryIfMounted();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const monthOptions = useMemo(() => {
+    const months = Array.from(new Set(portfolioSummaryEntries.map((item) => item.month))).sort();
+    return ['All', ...months];
+  }, [portfolioSummaryEntries]);
+
+  const fundTypeOptions = useMemo(() => {
+    const fundTypes = Array.from(new Set(portfolioSummaryEntries.map((item) => item.investmentType))).sort();
+    return ['All', ...fundTypes];
+  }, [portfolioSummaryEntries]);
 
   const bankOptions = useMemo(() => {
     const banks = Array.from(
@@ -178,6 +288,13 @@ function Dashboard() {
       return monthMatch && fundTypeMatch;
     });
   }, [portfolioEntries, monthFilter, fundTypeFilter]);
+
+  const filteredPortfolioSummaryEntries = useMemo(() => {
+    return portfolioSummaryEntries.filter((entry) => {
+      const fundTypeMatch = fundTypeFilter === 'All' || entry.investmentType === fundTypeFilter;
+      return fundTypeMatch;
+    });
+  }, [portfolioSummaryEntries, fundTypeFilter]);
 
   const filteredFixedDeposits = useMemo(() => {
     return fixedDepositEntries.filter((entry) => {
@@ -314,7 +431,6 @@ const handleSubmit = async (e: FormEvent) => {
         amount,
         currentValue: Number(formData.currentValue || amount),
         status: 'Growing',
-        // @ts-expect-error - add runtime field for the portfolio table
         folioNumber,
       };
 
@@ -346,7 +462,13 @@ const handleSubmit = async (e: FormEvent) => {
       )}
 
       <AddAllocationModal isOpen={showAllocationModal} onClose={() => setShowAllocationModal(false)} />
-      <AddTrackingModal isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} />
+      <AddTrackingModal
+        isOpen={showTrackingModal}
+        onClose={() => setShowTrackingModal(false)}
+        onSuccess={() => {
+          void loadPortfolioSummary();
+        }}
+      />
       <AddGrowthModal isOpen={showGrowthModal} onClose={() => setShowGrowthModal(false)} />
       <AddFundMasterModal isOpen={showFundMasterModal} onClose={() => setShowFundMasterModal(false)} />
 
@@ -367,13 +489,13 @@ const handleSubmit = async (e: FormEvent) => {
 
         <div className="right-column">
           <PortfolioSummarySection
-            entries={filteredPortfolioEntries}
-            monthFilter={monthFilter}
-            setMonthFilter={setMonthFilter}
+            entries={filteredPortfolioSummaryEntries}
+            allEntries={portfolioSummaryEntries}
             fundTypeFilter={fundTypeFilter}
             setFundTypeFilter={setFundTypeFilter}
-            monthOptions={monthOptions}
             fundTypeOptions={fundTypeOptions}
+            isLoading={portfolioSummaryLoading}
+            error={portfolioSummaryError}
           />
 
           <FixedDepositsSummarySection
