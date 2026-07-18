@@ -1,26 +1,97 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { addFund } from '../../services/fund-service';
+import { addFund, generateFundCode } from '../../services/fund-service';
 
 type AddFundMasterModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+const storedUser = localStorage.getItem('wealth-plus-username')?.trim()|| localStorage.getItem('wealth-plus-email')?.trim();
 
 function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
   const [fundMasterData, setFundMasterData] = useState({
     fundName: '',
     fundCode: '',
-    fundType: 'Mid Cap',
+    fundType: '',
     fundAmount: '',
     folioNumber: '',
     currency: 'INR',
     platform: 'Groww',
+    userName: storedUser || '',
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCodeLoading, setIsCodeLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [generatedFor, setGeneratedFor] = useState({ fundName: '', fundType: '', folioPrefix: '' });
+
+  const { fundName, fundType, folioNumber } = fundMasterData;
+  const folioPrefix = folioNumber.slice(0, 3);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const generateCode = async () => {
+      if (!fundName || !fundType || folioNumber.length < 3) {
+        setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
+        setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
+        setCodeError('');
+        return;
+      }
+
+      if (generatedFor.fundName === fundName && generatedFor.fundType === fundType && generatedFor.folioPrefix === folioPrefix) {
+        return;
+      }
+
+      setIsCodeLoading(true);
+      setCodeError('');
+      setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
+
+      try {
+        const response = await generateFundCode({ fundName, fundType, folioNumber });
+        if (cancelled) {
+          return;
+        }
+
+        const responseData = response && typeof response === 'object' && 'data' in response
+          ? (response as any).data
+          : response;
+
+        const generatedCode = typeof responseData === 'string'
+          ? responseData
+          : responseData?.fundCode
+          || responseData?.code
+          || responseData?.result
+          || (typeof responseData?.data === 'string' ? responseData.data : '')
+          || '';
+
+        if (!generatedCode) {
+          console.warn('generateFundCode returned no fund code:', responseData);
+          setCodeError('No fund code returned from API.');
+        }
+
+        setFundMasterData((prev) => ({ ...prev, fundCode: generatedCode }));
+        setGeneratedFor({ fundName, fundType, folioPrefix });
+      } catch (error) {
+        if (!cancelled) {
+          setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
+          setCodeError('Unable to generate fund code.');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsCodeLoading(false);
+        }
+      }
+    };
+
+    generateCode();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fundName, fundType, folioNumber]);
 
   if (!isOpen) {
     return null;
@@ -28,7 +99,17 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFundMasterData((prev) => ({ ...prev, [name]: value }));
+    const shouldClearCode = name === 'fundName' || name === 'fundType' || (name === 'folioNumber' && value.length < 3);
+
+    setFundMasterData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(shouldClearCode ? { fundCode: '' } : {}),
+    }));
+
+    if (name === 'fundName' || name === 'fundType' || (name === 'folioNumber' && value.length < 3)) {
+      setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
+    }
   };
 
   const formatSelectedDate = (date: Date | null) => {
@@ -48,10 +129,10 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
 
     const fundPayload = {
       fundName: fundMasterData.fundName,
-      fundCode: fundMasterData.fundCode,
       fundType: fundMasterData.fundType,
-      fundAmount: fundMasterData.fundAmount,
       folioNumber: fundMasterData.folioNumber,
+      fundCode: fundMasterData.fundCode,
+      fundAmount: fundMasterData.fundAmount,
       currency: fundMasterData.currency,
       createdDate: formatSelectedDate(selectedDate),
       platform: {
@@ -59,6 +140,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
         platformName: fundMasterData.platform,
         platformDescription: `${fundMasterData.platform} Platform`,
       },
+      userName: fundMasterData.userName,
     };
 
     try {
@@ -120,10 +202,13 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
               name="fundCode"
               type="text"
               value={fundMasterData.fundCode}
-              onChange={handleChange}
-              placeholder="01"
+              placeholder={isCodeLoading ? 'Generating fund code...' : 'Auto-generated fund code'}
+              readOnly
               required
+              className="readonly-input"
+              style={{ backgroundColor: '#f5f5f5', color: '#555' }}
             />
+            {codeError && <p className="field-error">{codeError}</p>}
           </div>
 
           <div className="field-group">
