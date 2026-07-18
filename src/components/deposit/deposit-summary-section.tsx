@@ -10,6 +10,9 @@ type FixedDepositsSummarySectionProps = {
   setBankFilter: (value: string) => void;
   monthOptions: string[];
   bankOptions: string[];
+  onAddFD: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 };
 
 function FilterBar({
@@ -67,6 +70,9 @@ function FixedDepositsSummarySection({
   setBankFilter,
   monthOptions,
   bankOptions,
+  onAddFD,
+  isLoading,
+  error,
 }: FixedDepositsSummarySectionProps) {
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
 
@@ -149,30 +155,56 @@ function FixedDepositsSummarySection({
         <span className="pill">₹{totalAmount.toLocaleString()}</span>
       </div>
 
-      <FilterBar
-        monthFilter={monthFilter}
-        setMonthFilter={setMonthFilter}
-        secondaryFilter={bankFilter}
-        setSecondaryFilter={setBankFilter}
-        monthOptions={monthOptions}
-        secondaryOptions={bankOptions}
-        secondaryLabel="Bank"
-      />
+      {isLoading ? (
+        <div className="fd-loading-state">
+          <p>Loading fixed deposit data...</p>
+        </div>
+      ) : error ? (
+        <div className="fd-error-state">
+          <p>{error}</p>
+          <button type="button" className="add-fd-btn" onClick={onAddFD}>
+            Add FD
+          </button>
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="fd-empty-state">
+          <div className="fd-empty-state-content">
+            <p className="eyebrow">Start tracking your FD portfolio</p>
+            <h3>Add your FD details to track your investments</h3>
+            <p>Once you add fixed deposit details, you'll be able to monitor maturity, interest and returns in one place.</p>
+            <button type="button" className="add-fd-btn" onClick={onAddFD}>
+              Add FD
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <FilterBar
+            monthFilter={monthFilter}
+            setMonthFilter={setMonthFilter}
+            secondaryFilter={bankFilter}
+            setSecondaryFilter={setBankFilter}
+            monthOptions={monthOptions}
+            secondaryOptions={bankOptions}
+            secondaryLabel="Bank"
+          />
 
-      <div className="table-wrapper">
-        <DataTable
-          columns={columns}
-          data={entries}
-          pagination
-          paginationPerPage={6}
-          paginationRowsPerPageOptions={[6, 10, 15]}
-          fixedHeader
-          fixedHeaderScrollHeight="320px"
-          dense
-          noDataComponent="No fixed deposit entries found for the selected filters."
-          customStyles={customStyles}
-        />
-      </div>
+          <div className="table-wrapper">
+            <DataTable
+              columns={columns}
+              data={entries}
+              pagination
+              paginationPerPage={6}
+              paginationRowsPerPageOptions={[6, 10, 15]}
+              fixedHeader
+              fixedHeaderScrollHeight="320px"
+              dense
+              noDataComponent="No fixed deposit entries found for the selected filters."
+              customStyles={customStyles}
+            />
+          </div>
+        </>
+      )}
     </section>
   );
 }
