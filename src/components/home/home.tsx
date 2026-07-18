@@ -5,7 +5,7 @@ import { Lock, Mail, ArrowUpRight } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
-import { trackLoginActivity } from "../../services/user-service";
+import { signIn, trackLoginActivity } from "../../services/user-service";
 
 function GoogleMark() {
   return (
@@ -61,27 +61,15 @@ export default function Homepage() {
       setIsSubmitting(true);
       setSignInError(null);
 
-      const response = await axios.post(
-        "/api/auth/signin",
-        {
-          email: emailValue,
-          password: passwordValue,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
+      const response = await signIn(emailValue, passwordValue);
 
-      if (response?.status === 200) {
+      if (response!=null) {
+        console.log("Sign-in successful:", response);
         const userEmail = emailValue;
         localStorage.setItem("wealth-plus-auth", "true");
-        localStorage.setItem("wealth-plus-username", response.data?.username || userEmail.split("@")[0] || "User");
-        localStorage.setItem("wealth-plus-email", emailValue);
-        localStorage.setItem("wealth-plus-full-name", "Admin User");
-        localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
+        localStorage.setItem("wealth-plus-username", response?.username || userEmail.split("@")[0] || "User");
+        localStorage.setItem("wealth-plus-email", response?.email || userEmail);
+        localStorage.setItem("wealth-plus-full-name", response?.firstName + " " + response?.lastName || "Unknown User");
         localStorage.removeItem("wealth-plus-password");
 
         const sessionId = await trackLoginActivity(userEmail);

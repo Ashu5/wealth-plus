@@ -49,3 +49,25 @@ export const trackLogoutActivity = async (userEmail: string, sessionId: string) 
     console.error('Error tracking logout activity:', error);
   }
 };
+
+export const signIn = async (email: string, password: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/user/signin`,
+      {
+        email,
+        password
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error signing in:', error);
+    throw error;
+  }
+};
