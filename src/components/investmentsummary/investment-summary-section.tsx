@@ -166,11 +166,6 @@ function InvestmentSummarySection({
       </div>
 
       <div className="summary-footer">
-        <div className="gain-box">
-          <span>Portfolio Gain</span>
-          <strong>₹{portfolioGain.toLocaleString()}</strong>
-        </div>
-
         {recentEntries.length > 0 && (
           <div className="saved-list">
             <h4>Recent Actions</h4>

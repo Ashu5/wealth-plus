@@ -3,11 +3,14 @@ import './dashboard.css';
 import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
 import FixedDepositsSummarySection from '../deposit/deposit-summary-section';
 import InvestmentSummarySection from '../investmentsummary/investment-summary-section';
+import MonthlySummary from './monthly-summary';
+import OverallSummary from './overall-summary';
 import type { FixedDepositEntry, ModalConfig, PortfolioEntry, StepDefinition } from './types';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import {addFund} from '../../services/fund-service';
 import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
+import { fetchFixedDeposits } from '../../services/deposit-service';
 import AddAllocationModal from '../allocate/add-allocation-modal';
 import AddTrackingModal from '../track/add-tracking-modal';
 import AddGrowthModal from '../grow/add-growth-modal';
@@ -39,7 +42,7 @@ const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): Por
       return fund.investments.map((investment) => ({
         id: investment.transactionId,
         month: formatMonth(investment.transactionDate),
-        investmentType: fund.fundType || 'Mutual Fund',
+        investmentType: fund.fundType || 'Bonds/Others',
         bank: '',
         name: fund.fundName,
         amount: investment.amountInvested,
@@ -55,7 +58,7 @@ const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): Por
     return {
       id: `${fund.fundName}-${currentMonth}`,
       month: currentMonth,
-      investmentType: fund.fundType || 'Mutual Fund',
+      investmentType: fund.fundType || 'Bonds/Others',
       bank: '',
       name: fund.fundName,
       amount: fund.amountInvested,
@@ -67,93 +70,6 @@ const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): Por
     };
   }).flat();
 };
-
-const initialPortfolioEntries: PortfolioEntry[] = [
-  {
-    id: 'p1',
-    month: '2026-06',
-    investmentType: 'Mutual Fund',
-    bank: 'HDFC Bank',
-    name: 'Apex Equity Fund',
-    amount: 25000,
-    currentValue: 30250,
-    status: 'Growing',
-    nav: 124.80,
-    units: 200.32,
-  },
-  {
-    id: 'p2',
-    month: '2026-05',
-    investmentType: 'Mutual Fund',
-    bank: 'SBI Bank',
-    name: 'BlueBond ETF',
-    amount: 18000,
-    currentValue: 19140,
-    status: 'Stable',
-    nav: 103.54,
-    units: 173.81,
-  },
-  {
-    id: 'p3',
-    month: '2026-06',
-    investmentType: 'Mutual Fund',
-    bank: 'ICICI Bank',
-    name: 'Nova Real Estate',
-    amount: 12000,
-    currentValue: 13800,
-    status: 'Growing',
-    nav: 115.00,
-    units: 104.35,
-  },
-  {
-    id: 'p4',
-    month: '2026-07',
-    investmentType: 'Mutual Fund',
-    bank: 'HDFC Bank',
-    name: 'Cash Reserve',
-    amount: 8000,
-    currentValue: 8240,
-    status: 'Stable',
-    nav: 103.00,
-    units: 77.67,
-  },
-];
-
-const initialFixedDeposits: FixedDepositEntry[] = [
-  {
-    id: 'fd1',
-    month: '2026-06',
-    investmentType: 'Fixed Deposit',
-    bank: 'HDFC Bank',
-    scheme: 'Regular FD',
-    amount: 120000,
-    tenure: '12 Months',
-    rate: 7.2,
-    maturityDate: '2026-08-10',
-  },
-  {
-    id: 'fd2',
-    month: '2026-05',
-    investmentType: 'Fixed Deposit',
-    bank: 'SBI Bank',
-    scheme: 'Tax Saver FD',
-    amount: 80000,
-    tenure: '5 Years',
-    rate: 6.8,
-    maturityDate: '2031-07-20',
-  },
-  {
-    id: 'fd3',
-    month: '2026-07',
-    investmentType: 'Fixed Deposit',
-    bank: 'ICICI Bank',
-    scheme: 'Senior Citizen FD',
-    amount: 150000,
-    tenure: '24 Months',
-    rate: 7.5,
-    maturityDate: '2028-06-15',
-  },
-];
 
 const stepDefinitions: StepDefinition[] = [
   {
@@ -181,7 +97,7 @@ const stepDefinitions: StepDefinition[] = [
     id: 'grow',
     title: 'Grow',
     subtitle: 'Compound wealth',
-    detail: 'Increase contributions and let returns build over time.',
+    detail: 'Increase contributions over time.',
     actionLabel: 'Add Growth',
   },
 ];
@@ -193,17 +109,19 @@ const monthlyModalConfig: ModalConfig = {
 };
 
 function Dashboard() {
-  const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>(initialPortfolioEntries);
-  const [fixedDepositEntries, setFixedDepositEntries] = useState<FixedDepositEntry[]>(initialFixedDeposits);
+  const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>([]);
+  const [fixedDepositEntries, setFixedDepositEntries] = useState<FixedDepositEntry[]>([]);
   const [portfolioSummaryEntries, setPortfolioSummaryEntries] = useState<PortfolioEntry[]>([]);
   const [portfolioSummaryLoading, setPortfolioSummaryLoading] = useState(true);
   const [portfolioSummaryError, setPortfolioSummaryError] = useState<string | null>(null);
+  const [fixedDepositLoading, setFixedDepositLoading] = useState(true);
+  const [fixedDepositError, setFixedDepositError] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState('All');
   const [fundTypeFilter, setFundTypeFilter] = useState('All');
   const [bankFilter, setBankFilter] = useState('All');
   const [activeModal, setActiveModal] = useState<ModalConfig | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({
-    investmentType: 'Mutual Fund',
+    investmentType: 'Bonds/Others',
     bank: 'ICICI Bank',
      folioNumber: '',
   });
@@ -216,12 +134,17 @@ function Dashboard() {
   const [showGrowthModal, setShowGrowthModal] = useState(false);
   const [showFundMasterModal, setShowFundMasterModal] = useState(false);
 
-  const loadPortfolioSummary = async () => {
-    const storedUser =
+  const getStoredUser = () => {
+    return (
       localStorage.getItem('wealth-plus-username')?.trim() ||
       localStorage.getItem('wealth-plus-user')?.trim() ||
       localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
-      'ashu01';
+      'ashu01'
+    );
+  };
+
+  const loadPortfolioSummary = async () => {
+    const storedUser = getStoredUser();
 
     console.log('Loading portfolio summary for user:', storedUser);
 
@@ -231,30 +154,51 @@ function Dashboard() {
     try {
       const payload = await fetchPortfolioSummary(storedUser);
       console.log('Portfolio summary API response:', payload);
-      setPortfolioSummaryEntries(buildPortfolioSummaryEntries(payload));
+      const entries = buildPortfolioSummaryEntries(payload);
+      setPortfolioSummaryEntries(entries);
+      setPortfolioEntries(entries);
     } catch (error) {
       console.error('Error loading portfolio summary:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Error details:', errorMessage);
       setPortfolioSummaryEntries([]);
+      setPortfolioEntries([]);
       setPortfolioSummaryError('Unable to load portfolio summary right now.');
     } finally {
       setPortfolioSummaryLoading(false);
     }
   };
 
+  const loadFixedDeposits = async () => {
+    const storedUser = getStoredUser();
+
+    setFixedDepositLoading(true);
+    setFixedDepositError(null);
+
+    try {
+      const deposits = await fetchFixedDeposits(storedUser);
+      setFixedDepositEntries(deposits);
+    } catch (error) {
+      console.error('Error loading fixed deposits:', error);
+      setFixedDepositEntries([]);
+      setFixedDepositError('Unable to load fixed deposit details right now.');
+    } finally {
+      setFixedDepositLoading(false);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
-    const loadSummaryIfMounted = async () => {
+    const loadDataIfMounted = async () => {
       if (!isMounted) {
         return;
       }
 
-      await loadPortfolioSummary();
+      await Promise.all([loadPortfolioSummary(), loadFixedDeposits()]);
     };
 
-    void loadSummaryIfMounted();
+    void loadDataIfMounted();
 
     return () => {
       isMounted = false;
@@ -262,9 +206,14 @@ function Dashboard() {
   }, []);
 
   const monthOptions = useMemo(() => {
-    const months = Array.from(new Set(portfolioSummaryEntries.map((item) => item.month))).sort();
+    const months = Array.from(
+      new Set([
+        ...portfolioSummaryEntries.map((item) => item.month),
+        ...fixedDepositEntries.map((item) => item.month),
+      ])
+    ).sort();
     return ['All', ...months];
-  }, [portfolioSummaryEntries]);
+  }, [portfolioSummaryEntries, fixedDepositEntries]);
 
   const fundTypeOptions = useMemo(() => {
     const fundTypes = Array.from(new Set(portfolioSummaryEntries.map((item) => item.investmentType))).sort();
@@ -304,18 +253,23 @@ function Dashboard() {
     });
   }, [fixedDepositEntries, monthFilter, bankFilter]);
 
-  const monthlyTotal =
-    filteredPortfolioEntries.reduce((sum, item) => sum + item.amount, 0) +
-    filteredFixedDeposits.reduce((sum, item) => sum + item.amount, 0);
+  const monthlyMutualContribution = filteredPortfolioEntries.reduce((sum, item) => sum + item.amount, 0);
+  const monthlyFixedContribution = filteredFixedDeposits.reduce((sum, item) => sum + item.amount, 0);
+  const monthlyTotal = monthlyMutualContribution + monthlyFixedContribution;
+
+  const totalInvestment = portfolioEntries.reduce((sum, item) => sum + item.amount, 0) + fixedDepositEntries.reduce((sum, item) => sum + item.amount, 0);
+  const totalCurrentValue = portfolioEntries.reduce((sum, item) => sum + item.currentValue, 0) + fixedDepositEntries.reduce((sum, item) => sum + item.amount, 0);
+  const totalGainLoss = totalCurrentValue - totalInvestment;
+  const totalGainLossPercentage = totalInvestment > 0 ? (totalGainLoss / totalInvestment) * 100 : 0;
 
   const portfolioValue = filteredPortfolioEntries.reduce((sum, item) => sum + item.currentValue, 0);
   const fixedDepositValue = filteredFixedDeposits.reduce((sum, item) => sum + item.amount, 0);
   const portfolioGain = portfolioValue - filteredPortfolioEntries.reduce((sum, item) => sum + item.amount, 0);
 
-  const openModal = () => {
+  const openModal = (defaultInvestmentType = 'Bonds/Others') => {
     setActiveModal(monthlyModalConfig);
     setFormData({
-      investmentType: 'Mutual Fund',
+      investmentType: defaultInvestmentType,
       bank: 'ICICI Bank',
       folioNumber: '',
     });
@@ -342,7 +296,7 @@ function Dashboard() {
 const closeModal = () => {
   setActiveModal(null);
   setFormData({
-    investmentType: 'Mutual Fund',
+    investmentType: 'Bonds/Others',
     bank: 'ICICI Bank',
     folioNumber: '',
   });
@@ -374,7 +328,7 @@ const formatSelectedDate = (date: Date | null) => {
 const handleSubmit = async (e: FormEvent) => {
   e.preventDefault();
 
-  const investmentType = formData.investmentType ?? 'Mutual Fund';
+  const investmentType = formData.investmentType ?? 'Bonds/Others';
   const bank = formData.bank || 'ICICI Bank';
   const folioNumber = formData.folioNumber || '';
   const amount = Number(formData.amount || formData.sipAmount || 0);
@@ -425,9 +379,9 @@ const handleSubmit = async (e: FormEvent) => {
       const entry: PortfolioEntry = {
         id: `pf-${Date.now()}`,
         month: selectedMonth,
-        investmentType: 'Mutual Fund',
+        investmentType: 'Bonds/Others',
         bank: '',
-        name: formData.fundName || 'New Mutual Fund',
+        name: formData.fundName || 'New Bonds/Others',
         amount,
         currentValue: Number(formData.currentValue || amount),
         status: 'Growing',
@@ -436,7 +390,7 @@ const handleSubmit = async (e: FormEvent) => {
 
       setPortfolioEntries((prev) => [entry, ...prev]);
       setRecentEntries((prev) => [
-        `Mutual fund added: ${entry.name} - ₹${entry.amount.toLocaleString()}`,
+        `Bonds/Others added: ${entry.name} - ₹${entry.amount.toLocaleString()}`,
         ...prev,
       ].slice(0, 4));
     }
@@ -473,21 +427,36 @@ const handleSubmit = async (e: FormEvent) => {
       <AddFundMasterModal isOpen={showFundMasterModal} onClose={() => setShowFundMasterModal(false)} />
 
       <div className="dashboard-grid">
-        <InvestmentSummarySection
-          monthlyTotal={monthlyTotal}
-          portfolioValue={portfolioValue}
-          fixedDepositValue={fixedDepositValue}
-          portfolioGain={portfolioGain}
-          recentEntries={recentEntries}
-          onAdd={openModal}
-          steps={stepDefinitions}
-          onAllocate={openAllocationModal}
-          onTrack={openTrackingModal}
-          onGrow={openGrowthModal}
-          onFundMaster={openFundMasterModal}
-        />
+        <div>
+          <MonthlySummary
+            mutualFundContribution={monthlyMutualContribution}
+            fixedDepositContribution={monthlyFixedContribution}
+            periodLabel="Monthly Contribution"
+          />
+
+          <InvestmentSummarySection
+            monthlyTotal={monthlyTotal}
+            portfolioValue={portfolioValue}
+            fixedDepositValue={fixedDepositValue}
+            portfolioGain={portfolioGain}
+            recentEntries={recentEntries}
+            onAdd={openModal}
+            steps={stepDefinitions}
+            onAllocate={openAllocationModal}
+            onTrack={openTrackingModal}
+            onGrow={openGrowthModal}
+            onFundMaster={openFundMasterModal}
+          />
+        </div>
 
         <div className="right-column">
+          <OverallSummary
+            totalInvestment={totalInvestment}
+            totalCurrentValue={totalCurrentValue}
+            totalGainLoss={totalGainLoss}
+            gainLossPercentage={totalGainLossPercentage}
+          />
+
           <PortfolioSummarySection
             entries={filteredPortfolioSummaryEntries}
             allEntries={portfolioSummaryEntries}
@@ -506,6 +475,9 @@ const handleSubmit = async (e: FormEvent) => {
             setBankFilter={setBankFilter}
             monthOptions={monthOptions}
             bankOptions={bankOptions}
+            onAddFD={() => openModal('Fixed Deposit')}
+            isLoading={fixedDepositLoading}
+            error={fixedDepositError}
           />
         </div>
       </div>
@@ -538,14 +510,14 @@ const handleSubmit = async (e: FormEvent) => {
                 <select
                   id="investmentType"
                   name="investmentType"
-                  value={formData.investmentType || 'Mutual Fund'}
+                  value={formData.investmentType || 'Bonds/Others'}
                   onChange={handleChange}
                 >
-                  <option value="Mutual Fund">Mutual Fund</option>
                   <option value="Fixed Deposit">Fixed Deposit</option>
+                  <option value="Bonds/Others">Bonds/Others</option>
                 </select>
               </div>
-              {formData.investmentType === 'Mutual Fund' && (
+              {formData.investmentType === 'Bonds/Others' && (
                   <div className="field-group">
                     <label htmlFor="fundName">Fund Name</label>
                     <input
@@ -586,7 +558,7 @@ const handleSubmit = async (e: FormEvent) => {
                 </div>
               )}
 
-               {formData.investmentType === 'Mutual Fund' && (
+               {formData.investmentType === 'Bonds/Others' && (
                    <div className="field-group">
                   <label htmlFor="fundType">Fund Type</label>
                   <select id="fundType" name="fundType" value={formData.fundType || 'Equity'} onChange={handleChange}>
@@ -600,7 +572,7 @@ const handleSubmit = async (e: FormEvent) => {
               )}
 
 
-               {formData.investmentType === 'Mutual Fund' && (
+               {formData.investmentType === 'Bonds/Others' && (
                    <div className="field-group">
                   <label htmlFor="currentType">Current Type</label>
                   <select id="currentType" name="currentType" value={formData.currentType || 'Equity'} onChange={handleChange}>
@@ -640,7 +612,7 @@ const handleSubmit = async (e: FormEvent) => {
                   />
                 </div>
               )}
-              {formData.investmentType === 'Mutual Fund' ? (
+              {formData.investmentType === 'Bonds/Others' ? (
               
                    <div className="field-group">
                   <label htmlFor="platformType">Platform Type</label>

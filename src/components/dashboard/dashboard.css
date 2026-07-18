@@ -40,6 +40,34 @@
   overflow: hidden;
 }
 
+.monthly-summary-card,
+.overall-summary-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.summary-card,
+.table-card,
+.fd-card,
+.monthly-summary-card,
+.overall-summary-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .summary-header,
 .table-header {
   display: flex;
@@ -80,6 +108,32 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.monthly-summary-grid,
+.overall-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.summary-item {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.summary-item .stat-label {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.summary-item strong {
+  font-size: 20px;
+  color: #0f172a;
 }
 
 .summary-stats > div {
@@ -413,6 +467,10 @@ th {
   text-align: center;
 }
 
+.summary-card/* .table-card, .fd-card, .monthly-summary-card{ */{
+  margin-bottom: 25px;
+}
+
 @media (max-width: 900px) {
   .dashboard-page {
     padding: 16px;
@@ -452,3 +510,4 @@ th {
     padding: 12px 14px;
   }
 }
+
