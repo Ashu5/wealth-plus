@@ -31,3 +31,16 @@ export const getUserFunds = async (userId: string) => {
         throw error;
     }
 };
+
+export const generateFundCode = async (params: { fundName: string; fundType: string; folioNumber: string }) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fund-master/generateFundCode`, {
+            params,
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error("Error generating fund code:", error);
+        throw error;
+    }
+};

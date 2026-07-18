@@ -14,11 +14,13 @@ type FundOption = {
   fundName: string;
   fundCode: string;
   folioNumber: string;
+  fundType: string;
 };
 
 type FundResponseItem = {
   fundName?: string | null;
   fundCode?: string | null;
+  fundType?: string | null;
   folioNumber?: string | null;
   id?: string | null;
   platform?: {
@@ -30,6 +32,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
   const [trackingData, setTrackingData] = useState({
     fundName: '',
     fundCode: '',
+    fundType: '',
     amount: '',
     nav: '',
     units: '',
@@ -73,6 +76,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
               return {
                 fundName: item?.fundName || '',
                 fundCode: derivedFundCode,
+                fundType: item?.fundType || '',
                 folioNumber: item?.folioNumber || '',
               };
             })
@@ -84,6 +88,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
               ...prev,
               fundName: normalizedFunds[0].fundName,
               fundCode: normalizedFunds[0].fundCode,
+              fundType: normalizedFunds[0].fundType,
               folioNumber: normalizedFunds[0].folioNumber,
               userId,
             }));
@@ -98,7 +103,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
       setFundOptions([]);
       setTrackingData((prev) => ({
         ...prev,
-        userId: candidateUsers[0] ?? 'ashu01',
+        userName: candidateUsers[0] ?? 'ashu01',
       }));
       setIsLoadingFunds(false);
     };
@@ -146,6 +151,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
         ...prev,
         fundName: value,
         fundCode: selectedFund?.fundCode || '',
+        fundType: selectedFund?.fundType || '',
         folioNumber: selectedFund?.folioNumber || '',
       }));
       return;
@@ -158,6 +164,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
     setTrackingData({
       fundName: '',
       fundCode: '',
+      fundType: '',
       amount: '',
       nav: '',
       units: '',
@@ -176,12 +183,13 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
     const payload = {
       folioNumber: trackingData.folioNumber || '002',
       fundName: trackingData.fundName,
+      fundType: trackingData.fundType,
       amount: trackingData.amount,
       fundCode: trackingData.fundCode,
       transactionDate: formatSelectedDate(selectedDate),
       nav: Number(trackingData.nav),
       units: Number(trackingData.units),
-      userId: currentUser,
+      userName: currentUser,
     };
     console.log('Submitting payload:', payload);
 
@@ -197,6 +205,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
         setTrackingData({
           fundName: '',
           fundCode: '',
+          fundType: '',
           amount: '',
           nav: '',
           units: '',
@@ -280,6 +289,18 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
               value={trackingData.fundCode}
               onChange={handleChange}
               placeholder="01"
+              readOnly
+            />
+          </div>
+
+          <div className="field-group">
+            <label htmlFor="fundType">Fund Type</label>
+            <input
+              id="fundType"
+              name="fundType"
+              type="text"
+              value={trackingData.fundType}
+              placeholder="--"
               readOnly
             />
           </div>
