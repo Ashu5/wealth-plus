@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileDetails from './profile-details';
 import './profile.css';
+import { trackLogoutActivity } from '../../services/user-service';
 
 function ProfileComponent() {
   const navigate = useNavigate();
@@ -46,9 +47,20 @@ function ProfileComponent() {
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || localStorage.getItem('wealth-plus-username')?.trim() || 'unknown_user';
+    const sessionId = sessionStorage.getItem('wealth-plus-session-id') || '';
+
+    if (!sessionId) {
+      console.warn('Missing session ID for logout activity. Sending logout event with empty session ID.');
+    }
+
+    await trackLogoutActivity(userEmail, sessionId);
+    sessionStorage.removeItem('wealth-plus-session-id');
+
     localStorage.removeItem('wealth-plus-auth');
     localStorage.removeItem('wealth-plus-user');
+    localStorage.removeItem('wealth-plus-username');
     localStorage.removeItem('wealth-plus-email');
     localStorage.removeItem('wealth-plus-full-name');
     localStorage.removeItem('wealth-plus-last-login');

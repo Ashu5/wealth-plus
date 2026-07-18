@@ -5,6 +5,7 @@ import { Lock, Mail, ArrowUpRight } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
+import { trackLoginActivity } from "../../services/user-service";
 
 function GoogleMark() {
   return (
@@ -75,15 +76,18 @@ export default function Homepage() {
       );
 
       if (response?.status === 200) {
+        const userEmail = emailValue;
         localStorage.setItem("wealth-plus-auth", "true");
-        localStorage.setItem(
-          "wealth-plus-user",
-          emailValue.includes("@") ? emailValue.split("@")[0] : emailValue
-        );
+        localStorage.setItem("wealth-plus-username", response.data?.username || userEmail.split("@")[0] || "User");
         localStorage.setItem("wealth-plus-email", emailValue);
         localStorage.setItem("wealth-plus-full-name", "Admin User");
         localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
         localStorage.removeItem("wealth-plus-password");
+
+        const sessionId = await trackLoginActivity(userEmail);
+        if (sessionId) {
+          sessionStorage.setItem('wealth-plus-session-id', sessionId);
+        }
 
         navigate("/dashboard");
       }
