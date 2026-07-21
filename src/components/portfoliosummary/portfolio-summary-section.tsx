@@ -53,6 +53,7 @@ function PortfolioSummarySection({
   error = null,
 }: PortfolioSummarySectionProps) {
   const [selectedFund, setSelectedFund] = useState<PortfolioEntry | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
 
@@ -161,7 +162,17 @@ function PortfolioSummarySection({
           <p className="eyebrow">Portfolio Details</p>
           <h2>Portfolio Summary</h2>
         </div>
-         <span className="pill">₹{totalAmount.toLocaleString()}</span>
+        <div className="summary-actions">
+          <button
+            type="button"
+            className="visibility-toggle"
+            onClick={() => setIsVisible((prev) => !prev)}
+            aria-label={isVisible ? 'Hide portfolio summary amounts' : 'Show portfolio summary amounts'}
+          >
+            {isVisible ? '🙈' : '👁️'}
+          </button>
+          <span className="pill">{isVisible ? `₹${totalAmount.toLocaleString()}` : '••••••'}</span>
+        </div>
       </div>
 
       <FilterBar

@@ -17,6 +17,7 @@ type InvestmentSummarySectionProps = {
   onTrack?: () => void;
   onGrow?: () => void;
   onFundMaster?: () => void;
+  onAddFD?: () => void;
   steps?: StepDefinition[];
 };
 
@@ -59,6 +60,7 @@ function FlowStepCard({
   onTrack,
   onGrow,
   onFundMaster,
+  onAddFD,
 }: {
   step: StepDefinition;
   index: number;
@@ -67,6 +69,7 @@ function FlowStepCard({
   onTrack?: () => void;
   onGrow?: () => void;
   onFundMaster?: () => void;
+  onAddFD?: () => void;
 }) {
   const handleClick = () => {
     if (step.id === 'allocate') {
@@ -89,6 +92,11 @@ function FlowStepCard({
       return;
     }
 
+    if (step.id === 'fixedDeposit') {
+      onAddFD?.();
+      return;
+    }
+
     onAdd(step.id);
   };
 
@@ -107,7 +115,7 @@ function FlowStepCard({
         {step.actionLabel}
       </button>
 
-      {index < defaultSteps.length - 1 && <div className="flow-arrow">→</div>}
+      {/* {index < defaultSteps.length - 1 && <div className="flow-arrow">→</div>} */}
     </div>
   );
 }
@@ -116,13 +124,13 @@ function InvestmentSummarySection({
   monthlyTotal,
   portfolioValue,
   fixedDepositValue,
-  portfolioGain,
   recentEntries,
   onAdd,
   onAllocate,
   onTrack,
   onGrow,
   onFundMaster,
+  onAddFD,
   steps = defaultSteps,
 }: InvestmentSummarySectionProps) {
   return (
@@ -161,6 +169,7 @@ function InvestmentSummarySection({
             onTrack={onTrack}
             onGrow={onGrow}
             onFundMaster={onFundMaster}
+            onAddFD={onAddFD}
           />
         ))}
       </div>

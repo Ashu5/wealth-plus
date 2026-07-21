@@ -2,7 +2,6 @@ import { type ChangeEvent, type FormEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { ModalConfig } from '../dashboard/types';
-import { Currency } from 'lucide-react';
 
 type AddFDModalProps = {
   activeModal: ModalConfig | null;

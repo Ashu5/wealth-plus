@@ -64,3 +64,13 @@ export const addFixedDeposit = async (fixedDepositData: any) => {
         throw error;
     }
 };
+
+export const getUserFixedDeposits = async (userName: string) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fixedDeposit/user/${encodeURIComponent(userName)}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching user fixed deposits:", error);
+        throw error;
+    }
+};

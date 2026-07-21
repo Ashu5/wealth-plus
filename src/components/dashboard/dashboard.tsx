@@ -6,9 +6,8 @@ import InvestmentSummarySection from '../investmentsummary/investment-summary-se
 import MonthlySummary from './monthly-summary';
 import OverallSummary from './overall-summary';
 import type { FixedDepositEntry, ModalConfig, PortfolioEntry, StepDefinition } from './types';
-import {addFixedDeposit} from '../../services/fund-service';
+import { addFixedDeposit, getUserFixedDeposits } from '../../services/fund-service';
 import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
-import { fetchFixedDeposits } from '../../services/deposit-service';
 import AddAllocationModal from '../allocate/add-allocation-modal';
 import AddTrackingModal from '../track/add-tracking-modal';
 import AddGrowthModal from '../grow/add-growth-modal';
@@ -99,12 +98,78 @@ const stepDefinitions: StepDefinition[] = [
     detail: 'Increase contributions over time.',
     actionLabel: 'Add Growth',
   },
+  {
+    id: 'fixedDeposit',
+    title: 'Fixed Deposit',
+    subtitle: 'Save FD',
+    detail: 'Add fixed deposit details and track maturity, interest, and returns.',
+    actionLabel: 'Add Fixed Deposit',
+  },
 ];
 
 const monthlyModalConfig: ModalConfig = {
   id: 'add-fund',
   title: 'Add Fund Details',
   submitLabel: 'Add FD',
+};
+
+const buildFixedDepositEntries = (payload: unknown): FixedDepositEntry[] => {
+  const getCollection = (source: unknown): unknown[] => {
+    if (Array.isArray(source)) {
+      return source;
+    }
+
+    if (source && typeof source === 'object') {
+      const record = source as Record<string, unknown>;
+      if (Array.isArray(record.data)) {
+        return record.data;
+      }
+      if (Array.isArray(record.fixedDeposits)) {
+        return record.fixedDeposits;
+      }
+      if (Array.isArray(record.items)) {
+        return record.items;
+      }
+    }
+
+    return [];
+  };
+
+  const getTenureLabel = (startDate: string, endDate: string) => {
+    if (!startDate || !endDate) {
+      return 'N/A';
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return 'N/A';
+    }
+
+    const monthDifference = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+    return monthDifference > 0 ? `${monthDifference} months` : '0 months';
+  };
+
+  return getCollection(payload).map((entry, index) => {
+    const record = entry as Record<string, unknown>;
+    const transactionDate = typeof record.transactionDate === 'string' ? record.transactionDate : '';
+    const maturityDate = typeof record.maturityDate === 'string' ? record.maturityDate : '';
+    const investmentType = typeof record.investmentType === 'string' ? record.investmentType : 'FIXED_DEPOSIT';
+    const schemeLabel = investmentType.toLowerCase().includes('fixed') ? 'Fixed Deposit' : investmentType.replace(/_/g, ' ');
+
+    return {
+      id: String(record.id || record.fdNumber || record.userName || `${index}`),
+      month: transactionDate ? formatMonth(transactionDate) : '',
+      investmentType: 'Fixed Deposit',
+      bank: String(record.bank || ''),
+      fdNumber: String(record.fdNumber || schemeLabel || 'Fixed Deposit'),
+      amount: Number(record.amountFixed ?? record.amount ?? 0),
+      tenure: getTenureLabel(transactionDate, maturityDate),
+      rate: Number(record.interestRate ?? 0),
+      maturityDate: maturityDate,
+    };
+  });
 };
 
 function Dashboard() {
@@ -177,8 +242,8 @@ function Dashboard() {
     setFixedDepositError(null);
 
     try {
-      const deposits = await fetchFixedDeposits(storedUser);
-      setFixedDepositEntries(deposits);
+      const deposits = await getUserFixedDeposits(storedUser);
+      setFixedDepositEntries(buildFixedDepositEntries(deposits));
     } catch (error) {
       console.error('Error loading fixed deposits:', error);
       setFixedDepositEntries([]);
@@ -370,7 +435,7 @@ const handleSubmit = async (e: FormEvent) => {
       month: selectedMonth,
       investmentType: 'Fixed Deposit',
       bank: payload.bank,
-      scheme: formData.scheme || 'Fixed Deposit',
+      fdNumber: formData.fdNumber || `FD${Date.now()}`,
       amount: amountInvested,
       tenure: formData.tenure || '12 Months',
       rate: interestRate,
@@ -433,6 +498,7 @@ const handleSubmit = async (e: FormEvent) => {
             onTrack={openTrackingModal}
             onGrow={openGrowthModal}
             onFundMaster={openFundMasterModal}
+            onAddFD={() => openModal('Fixed Deposit')}
           />
         </div>
 
