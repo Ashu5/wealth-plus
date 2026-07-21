@@ -1,6 +1,7 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import DataTable, { type TableColumn } from 'react-data-table-component';
 import type { FixedDepositEntry } from '../dashboard/types';
+import FixedDepositDetailsModal from '../modal/fixed-deposit-details-modal';
 
 type FixedDepositsSummarySectionProps = {
   entries: FixedDepositEntry[];
@@ -74,6 +75,8 @@ function FixedDepositsSummarySection({
   isLoading,
   error,
 }: FixedDepositsSummarySectionProps) {
+  const [selectedEntry, setSelectedEntry] = useState<FixedDepositEntry | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
 
   const columns: TableColumn<FixedDepositEntry>[] = [
@@ -90,8 +93,8 @@ function FixedDepositsSummarySection({
       grow: 1,
     },
     {
-      name: 'Scheme',
-      selector: (row) => row.scheme,
+      name: 'FD Number',
+      selector: (row) => row.fdNumber,
       sortable: true,
       grow: 2,
     },
@@ -152,7 +155,17 @@ function FixedDepositsSummarySection({
           <p className="eyebrow">Fixed Deposits</p>
           <h2>Fixed Deposits Summary</h2>
         </div>
-        <span className="pill">₹{totalAmount.toLocaleString()}</span>
+        <div className="summary-actions">
+          <button
+            type="button"
+            className="visibility-toggle"
+            onClick={() => setIsVisible((prev) => !prev)}
+            aria-label={isVisible ? 'Hide fixed deposit summary amounts' : 'Show fixed deposit summary amounts'}
+          >
+            {isVisible ? '🙈' : '👁️'}
+          </button>
+          <span className="pill">{isVisible ? `₹${totalAmount.toLocaleString()}` : '••••••'}</span>
+        </div>
       </div>
 
       {isLoading ? (
@@ -201,10 +214,17 @@ function FixedDepositsSummarySection({
               dense
               noDataComponent="No fixed deposit entries found for the selected filters."
               customStyles={customStyles}
+              onRowClicked={(row) => setSelectedEntry(row)}
             />
           </div>
         </>
       )}
+
+      <FixedDepositDetailsModal
+        entry={selectedEntry}
+        isOpen={Boolean(selectedEntry)}
+        onClose={() => setSelectedEntry(null)}
+      />
     </section>
   );
 }

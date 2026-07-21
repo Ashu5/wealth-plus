@@ -44,3 +44,33 @@ export const generateFundCode = async (params: { fundName: string; fundType: str
         throw error;
     }
 };
+
+
+export const addFixedDeposit = async (fixedDepositData: any) => {
+    try {
+        const response = await axios.post(
+            `${API_BASE_URL}/fixedDeposit/add`,
+            fixedDepositData,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error("Error adding fixed deposit:", error);
+        throw error;
+    }
+};
+
+export const getUserFixedDeposits = async (userName: string) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fixedDeposit/user/${encodeURIComponent(userName)}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching user fixed deposits:", error);
+        throw error;
+    }
+};

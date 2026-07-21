@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 type OverallSummaryProps = {
   totalInvestment: number;
   totalCurrentValue: number;
@@ -6,6 +8,16 @@ type OverallSummaryProps = {
 };
 
 function OverallSummary({ totalInvestment, totalCurrentValue, totalGainLoss, gainLossPercentage }: OverallSummaryProps) {
+  const [isVisible, setIsVisible] = useState(true);
+
+  const renderAmount = (value: number) => {
+    if (!isVisible) {
+      return '••••••';
+    }
+
+    return `₹${value.toLocaleString()}`;
+  };
+
   return (
     <section className="summary-card overall-summary-card">
       <div className="summary-header">
@@ -13,22 +25,32 @@ function OverallSummary({ totalInvestment, totalCurrentValue, totalGainLoss, gai
           <p className="eyebrow">Overall Summary</p>
           <h2>Lifetime Performance</h2>
         </div>
-        <span className="pill">{gainLossPercentage.toFixed(2)}%</span>
+        <div className="summary-actions">
+          <button
+            type="button"
+            className="visibility-toggle"
+            onClick={() => setIsVisible((prev) => !prev)}
+            aria-label={isVisible ? 'Hide lifetime performance amounts' : 'Show lifetime performance amounts'}
+          >
+            {isVisible ? '🙈' : '👁️'}
+          </button>
+          <span className="pill">{gainLossPercentage.toFixed(2)}%</span>
+        </div>
       </div>
 
       <div className="summary-grid overall-summary-grid">
         <div className="summary-item">
           <span className="stat-label">Total Investment</span>
-          <strong>₹{totalInvestment.toLocaleString()}</strong>
+          <strong>{renderAmount(totalInvestment)}</strong>
         </div>
         <div className="summary-item">
           <span className="stat-label">All Time Return</span>
-          <strong>₹{totalCurrentValue.toLocaleString()}</strong>
+          <strong>{renderAmount(totalCurrentValue)}</strong>
         </div>
         <div className="summary-item">
           <span className="stat-label">Gain / Loss</span>
           <strong className={totalGainLoss >= 0 ? 'gain' : 'loss'}>
-            ₹{totalGainLoss.toLocaleString()}
+            {renderAmount(totalGainLoss)}
           </strong>
         </div>
       </div>

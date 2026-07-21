@@ -19,7 +19,7 @@ export type FixedDepositEntry = {
   month: string;
   investmentType: 'Fixed Deposit';
   bank: string;
-  scheme: string;
+  fdNumber: string;
   amount: number;
   tenure: string;
   rate: number;
