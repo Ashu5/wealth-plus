@@ -7,13 +7,13 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/auth': {
-        target: 'http://${process.env.VITE_API_HOST}/wealth-plus/api/user',
+        target: 'http://${process.env.VITE_API_BASE_URL}/wealth-plus/api/user',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/auth/, ''),
       },
       '/wealth-plus': {
-        target: 'http://${process.env.VITE_API_HOST}/wealth-plus',
+        target: 'http://${process.env.VITE_API_BASE_URL}/wealth-plus',
         changeOrigin: true,
         secure: false,
       },
