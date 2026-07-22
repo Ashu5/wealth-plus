@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef, type FormEvent } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
-import { assignUsername, registerUser, signIn, trackLogoutActivity } from "../../services/user-service";
+import { assignUsername, googleLogin, profileDetails, registerUser, signIn, trackLogoutActivity } from "../../services/user-service";
 
 function GoogleMark() {
   return (
@@ -229,11 +229,9 @@ export default function Homepage() {
     setAuthMode("signin");
   };
 
-  const handleGoogleCredentialResponse = async (response: { credential?: string }) => {
-    const credential = response?.credential;
-    if (!credential) {
-      setOauthError("Google sign-in was cancelled.");
-      setOauthLoading(false);
+  const handleOAuthLogin = async (provider: "google" | "apple") => {
+    if (provider === "apple") {
+      setOauthError("Apple sign-in is not enabled yet.");
       return;
     }
 
@@ -241,140 +239,80 @@ export default function Homepage() {
       setOauthLoading(true);
       setOauthError(null);
 
-      const payloadSegment = credential.split(".")[1];
-      if (!payloadSegment) {
-        throw new Error("The Google token payload is invalid.");
-      }
-
-      const decodedPayload = JSON.parse(atob(payloadSegment.replace(/-/g, "+").replace(/_/g, "/"))) as {
-        email?: string;
-        given_name?: string;
-        family_name?: string;
-        name?: string;
-      };
-
-      const email = decodedPayload.email?.trim();
-      const firstName = decodedPayload.given_name?.trim() || decodedPayload.name?.split(" ")[0]?.trim() || "User";
-      const lastName = decodedPayload.family_name?.trim() || decodedPayload.name?.split(" ").slice(1).join(" ").trim() || "User";
+      const result = await googleLogin();
+      const user = result.user;
+      const email = user?.email?.trim();
+      const fullName = user?.displayName?.trim() || "User";
 
       if (!email) {
         throw new Error("Google did not return an email address.");
       }
 
-      const assignedUsernameResponse = await assignUsername(email);
-      const assignedUsername = resolveUsernameFromPayload(assignedUsernameResponse);
-      const username = assignedUsername || `${firstName}${lastName}`.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 16) || email.split("@")[0];
+      let storedUserName = user?.displayName?.trim() || email.split("@")[0];
+      let storedFullName = fullName;
 
-      const registerResponse = await registerUser({
-        userName: username,
-        password: `oauth-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-        email,
-        firstName,
-        lastName,
-        isAdmin: false,
-        isActive: true,
-        isRestrictedUser: false,
-      });
+      try {
+        const profileResponse = await profileDetails(email);
+        const profileRecord = profileResponse && typeof profileResponse === "object"
+          ? (profileResponse as Record<string, unknown>)
+          : null;
+        const profileData = profileRecord?.data && typeof profileRecord.data === "object"
+          ? (profileRecord.data as Record<string, unknown>)
+          : profileRecord;
 
-      if (registerResponse?.status === 200 || registerResponse?.status === 201) {
-        persistAuthenticatedUser(email, {
-          userName: username,
-          userEmail: email,
-          fullName: `${firstName} ${lastName}`.trim(),
-        });
-        setOauthError(null);
-        navigate("/dashboard", { replace: true });
-        return;
+        if (profileData) {
+          storedUserName =
+            typeof profileData?.userName === "string" && profileData.userName.trim()
+              ? profileData.userName
+              : typeof profileData?.username === "string" && profileData.username.trim()
+                ? profileData.username
+                : storedUserName;
+          storedFullName =
+            typeof profileData?.fullName === "string" && profileData.fullName.trim()
+              ? profileData.fullName
+              : typeof profileData?.firstName === "string" || typeof profileData?.lastName === "string"
+                ? [profileData?.firstName, profileData?.lastName].filter(Boolean).join(" ").trim() || storedFullName
+                : storedFullName;
+        } else {
+          const assignedUsernameResponse = await assignUsername(email);
+          const assignedUsername = resolveUsernameFromPayload(assignedUsernameResponse);
+          const username = assignedUsername || storedUserName.replace(/[^a-zA-Z0-9]+/g, "").slice(0, 20) || email.split("@")[0];
+          const firstName = fullName.split(" ")[0]?.trim() || "User";
+          const lastName = fullName.split(" ").slice(1).join(" ").trim() || "User";
+
+          const createResponse = await registerUser({
+            userName: username,
+            password: `oauth-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+            email,
+            firstName,
+            lastName,
+            isAdmin: false,
+            isActive: true,
+            isRestrictedUser: false,
+          });
+
+          if (createResponse?.status === 200 || createResponse?.status === 201) {
+            storedUserName = username;
+            storedFullName = `${firstName} ${lastName}`.trim();
+          }
+        }
+      } catch (error) {
+        console.warn("Google profile lookup failed, falling back to Google data:", error);
       }
 
-      throw new Error("Unable to create the Google account right now.");
+      persistAuthenticatedUser(email, {
+        userName: storedUserName,
+        userEmail: email,
+        fullName: storedFullName,
+      });
+
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("Unable to complete Google sign-in:", error);
-      setOauthError("Unable to create your account through Google right now.");
+      setOauthError("Unable to sign in with Google right now.");
     } finally {
       setOauthLoading(false);
     }
-  };
-
-  useEffect(() => {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
-    if (!googleClientId) {
-      setOauthError("Google sign-in is not configured yet. Add VITE_GOOGLE_CLIENT_ID to your environment.");
-      return;
-    }
-
-    const googleSdk = (window as Window & {
-      google?: {
-        accounts?: {
-          id?: {
-            initialize: (options: { client_id: string; callback: (response: { credential?: string }) => void; auto_select: boolean; cancel_on_tap_outside: boolean }) => void;
-            prompt: () => void;
-          };
-        };
-      };
-    }).google;
-
-    const initializeGoogleClient = () => {
-      if (!googleSdk?.accounts?.id) {
-        return;
-      }
-
-      googleSdk.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: handleGoogleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-    };
-
-    if ((window as Window & { google?: unknown }).google) {
-      initializeGoogleClient();
-      return;
-    }
-
-    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-    if (existingScript) {
-      existingScript.addEventListener("load", initializeGoogleClient, { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onload = initializeGoogleClient;
-    document.head.appendChild(script);
-  }, []);
-
-  const handleOAuthLogin = (provider: "google" | "apple") => {
-    if (provider === "apple") {
-      setOauthError("Apple sign-in is not enabled yet.");
-      return;
-    }
-
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
-    if (!googleClientId) {
-      setOauthError("Google sign-in is not configured yet. Add VITE_GOOGLE_CLIENT_ID to your environment.");
-      return;
-    }
-
-    const googleSdk = (window as Window & {
-      google?: {
-        accounts?: {
-          id?: {
-            prompt: () => void;
-          };
-        };
-      };
-    }).google;
-
-    if (!googleSdk?.accounts?.id) {
-      setOauthError("Google sign-in is not ready yet. Please refresh the page and try again.");
-      return;
-    }
-
-    setOauthError(null);
-    googleSdk.accounts.id.prompt();
   };
 
   return (
@@ -563,7 +501,7 @@ export default function Homepage() {
             </div>
 
             <div className="oauth-grid">
-              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("google")} disabled={oauthLoading || isSubmitting}>
+              <button type="button" className="btn-oauth" onClick={() => void handleOAuthLogin("google")} disabled={oauthLoading || isSubmitting}>
                 <GoogleMark />
                 {oauthLoading ? "Connecting..." : "Google"}
               </button>

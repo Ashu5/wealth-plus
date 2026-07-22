@@ -1,8 +1,13 @@
 import axios from 'axios';
 import type { UserRegisterRequest } from '../models/user-register-request';
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../firebase";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
 console.log('API base URL:', import.meta.env.VITE_API_BASE_URL);
+
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: 'select_account' });
 
 export const trackLoginActivity = async (userEmail: string): Promise<string | undefined> => {
   try {
@@ -112,7 +117,7 @@ export const assignUsername = async (email: string) => {
 export const profileDetails = async (userEmail: string) => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/user/profile/${userEmail}`,
+      `${API_BASE_URL}/user/profile/${encodeURIComponent(userEmail.trim())}`,
       {
         headers: {
           'Content-Type': 'application/json'
@@ -126,3 +131,25 @@ export const profileDetails = async (userEmail: string) => {
     throw error;
   }
 };
+
+
+export const googleLogin = async () => {
+  const result = await signInWithPopup(auth, provider);
+  const user = result.user;
+  const token = await user.getIdToken();
+
+  const response = await axios.post(
+    `${API_BASE_URL}/user/sso-login`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    }
+  );
+
+  return { user, token, response };
+};
+
