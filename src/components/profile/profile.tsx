@@ -12,7 +12,7 @@ function ProfileComponent() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('wealth-plus-user');
+    const storedUser = localStorage.getItem('wealth-plus-username');
     if (storedUser) {
       setUserName(storedUser);
     }
@@ -59,7 +59,6 @@ function ProfileComponent() {
     sessionStorage.removeItem('wealth-plus-session-id');
 
     localStorage.removeItem('wealth-plus-auth');
-    localStorage.removeItem('wealth-plus-user');
     localStorage.removeItem('wealth-plus-username');
     localStorage.removeItem('wealth-plus-email');
     localStorage.removeItem('wealth-plus-full-name');

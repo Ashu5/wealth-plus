@@ -41,7 +41,7 @@ export interface PortfolioSummaryApiResponse {
 }
 
 export const fetchPortfolioSummary = async (username: string) => {
-  const url = `${API_BASE_URL}/portfolio/summary/username/${encodeURIComponent(username)}`;
+  const url = `${API_BASE_URL}/portfolio/summary/username/${username}`;
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {

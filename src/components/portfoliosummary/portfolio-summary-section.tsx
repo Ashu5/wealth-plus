@@ -56,6 +56,7 @@ function PortfolioSummarySection({
   const [isVisible, setIsVisible] = useState(true);
 
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
+  const hasPortfolioEntries = entries.length > 0;
 
   const getStatusBadgeClassName = (row: PortfolioEntry) => {
     const gain = row.currentValue - row.amount;
@@ -199,20 +200,26 @@ function PortfolioSummarySection({
         </div>
       ) : (
         <div className="table-wrapper">
-          <DataTable
-            columns={columns}
-            data={entries}
-            pagination
-            paginationPerPage={6}
-            paginationRowsPerPageOptions={[6, 10, 15]}
-            fixedHeader
-            fixedHeaderScrollHeight="320px"
-            dense
-            noDataComponent="No portfolio entries found for the selected filters."
-            customStyles={customStyles}
-            onRowClicked={(row) => setSelectedFund(row)}
-            pointerOnHover
-          />
+          {hasPortfolioEntries ? (
+            <DataTable
+              columns={columns}
+              data={entries}
+              pagination
+              paginationPerPage={6}
+              paginationRowsPerPageOptions={[6, 10, 15]}
+              fixedHeader
+              fixedHeaderScrollHeight="320px"
+              dense
+              noDataComponent="No portfolio entries found for the selected filters."
+              customStyles={customStyles}
+              onRowClicked={(row) => setSelectedFund(row)}
+              pointerOnHover
+            />
+          ) : (
+            <div className="empty-state-banner" role="status">
+              Add your fund and transaction to start traking your investment
+            </div>
+          )}
         </div>
       )}
     </section>

@@ -6,10 +6,9 @@ console.log('API base URL:', import.meta.env.VITE_API_BASE_URL);
 
 export const trackLoginActivity = async (userEmail: string): Promise<string | undefined> => {
   try {
-    const url = `${API_BASE_URL}/activity/login`;
-    const response = await axios.post(
+    const url = `${API_BASE_URL}/activity/user/${userEmail}/active`;
+    const response = await axios.get(
       url,
-      null,
       {
         params: {
           userEmail
@@ -31,24 +30,24 @@ export const trackLoginActivity = async (userEmail: string): Promise<string | un
 export const trackLogoutActivity = async (userEmail: string, sessionId: string) => {
   try {
     const url = `${API_BASE_URL}/activity/logout`;
-    await axios.post(
+    const response = await axios.post(
       url,
       {
         userEmail,
         sessionId,
       },
       {
-        params: {
-          userEmail
-        },
         headers: {
           'Content-Type': 'application/json',
         },
         withCredentials: true,
       }
     );
+
+    return response;
   } catch (error) {
     console.error('Error tracking logout activity:', error);
+    throw error;
   }
 };
 
@@ -58,16 +57,16 @@ export const signIn = async (email: string, password: string) => {
       `${API_BASE_URL}/user/signin`,
       {
         email,
-        password
+        password,
       },
       {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        withCredentials: true
+        withCredentials: true,
       }
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error signing in:', error);
     throw error;
@@ -106,6 +105,24 @@ export const assignUsername = async (email: string) => {
     return response.data;
   } catch (error) {
     console.error('Error assigning username:', error);
+    throw error;
+  }
+};
+
+export const profileDetails = async (userEmail: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/user/profile/${userEmail}`,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching profile details:', error);
     throw error;
   }
 };

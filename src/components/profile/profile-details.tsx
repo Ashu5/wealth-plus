@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import axios from 'axios';
 import './profile-details.css';
-
+import { profileDetails } from '../../services/user-service';
 type ProfileDetailsProps = {
   onClose: () => void;
 };
@@ -27,13 +26,11 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const storedName = localStorage.getItem('wealth-plus-user') || 'Guest';
       const storedUsername = localStorage.getItem('wealth-plus-username') || '';
       const storedEmail = localStorage.getItem('wealth-plus-email') || '';
       const storedFullName = localStorage.getItem('wealth-plus-full-name') || 'Guest User';
       const storedLastLogin = localStorage.getItem('wealth-plus-last-login') || 'Not available';
 
-      setName(storedName);
       setUsername(storedUsername);
       setEmail(storedEmail);
       setFullName(storedFullName);
@@ -44,9 +41,7 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
       }
 
       try {
-        const response = await axios.get(`/wealth-plus/api/user/profile/${encodeURIComponent(storedEmail)}`, {
-          withCredentials: true,
-        });
+        const response = await profileDetails(storedEmail);
 
         const profileData = response?.data?.data || response?.data || {};
         const firstName = profileData?.firstName || profileData?.first_name || '';

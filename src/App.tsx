@@ -8,13 +8,12 @@ import Footer from './components/footer/footer';
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('wealth-plus-auth') === 'true';
-  const hasSession = Boolean(sessionStorage.getItem('wealth-plus-session-id'));
+  const hasSession = Boolean(sessionStorage.getItem('wealth-plus-session-id') || isAuthenticated);
 
   useEffect(() => {
     if (!isAuthenticated || !hasSession) {
       sessionStorage.removeItem('wealth-plus-session-id');
       localStorage.removeItem('wealth-plus-auth');
-      localStorage.removeItem('wealth-plus-user');
       localStorage.removeItem('wealth-plus-username');
       localStorage.removeItem('wealth-plus-email');
       localStorage.removeItem('wealth-plus-full-name');
