@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import axios from 'axios';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowUpRight, CheckCircle2, Lock, Mail, UserRound } from 'lucide-react';
-import { assignUsername } from '../../services/user-service';
+import { assignUsername, registerUser } from '../../services/user-service';
+import type { UserRegisterRequest } from '../../models/user-register-request';
+
+const MIN_PASS_LENGTH=6;
 type UserRegistrationProps = {
   onSwitchToLogin: () => void;
   onRegistrationSuccess?: () => void;
@@ -52,8 +54,15 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'error'>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   const isEmailValid = useMemo(() => /\S+@\S+\.\S+/.test(email), [email]);
+  const isFormValid = useMemo(() => {
+    const hasRequiredFields = Boolean(firstName.trim() && lastName.trim() && email.trim() && password.trim() && username.trim());
+    const passwordIsValid = password.trim().length >= MIN_PASS_LENGTH;
+
+    return hasRequiredFields && isEmailValid && passwordIsValid && usernameStatus === 'available';
+  }, [firstName, lastName, email, password, username, usernameStatus, isEmailValid]);
 
   useEffect(() => {
     if (!email.trim() || !isEmailValid) {
@@ -68,7 +77,6 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
       try {
         const response = await assignUsername(`${email.trim()}`);
         const assignedUsername = resolveUsernameFromPayload(response);
-        console.log('Assigned username:', response  );
         if (assignedUsername) {
           setUsername(assignedUsername);
           setUsernameStatus('available');
@@ -89,34 +97,31 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !username.trim()) {
+    if (!isFormValid || isSubmittingRef.current) {
       return;
     }
 
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+
     try {
-      setIsSubmitting(true);
-      const response = await axios.post(
-        '/api/auth/register',
+      const registerRequest:UserRegisterRequest=
         {
-          username,
-          password,
+          userName:username,
+          password:password,
           email: email.trim(),
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           isAdmin: false,
           isActive: true,
-          isRestrictedUser: false,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          isRestrictedUser: false
         }
-      );
+        console.log("request payload:",registerRequest);
+       const response=await registerUser(registerRequest);
 
       if (response?.status === 200 || response?.status === 201) {
         localStorage.setItem('wealth-plus-auth', 'true');
-        localStorage.setItem('wealth-plus-user', username);
+        localStorage.setItem('wealth-plus-username', username);
         localStorage.setItem('wealth-plus-email', email.trim());
         localStorage.setItem('wealth-plus-full-name', `${firstName.trim()} ${lastName.trim()}`);
         localStorage.setItem('wealth-plus-last-login', new Date().toLocaleString());
@@ -129,6 +134,7 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
       setPassword('');
       window.alert('Unable to create account right now.');
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
       setPassword('');
     }
@@ -192,12 +198,14 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
             type="password"
             name="password"
             placeholder="••••••••••"
+            minLength={MIN_PASS_LENGTH}
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
+        <p style={{ margin: '6px 0 0', color: '#8b8b8b', fontSize: 12 }}>Password must be at least 6 characters.</p>
       </label>
 
       <label className="field">
@@ -227,7 +235,7 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
         )}
       </label>
 
-      <button type="submit" className="btn-primary" disabled={isSubmitting || usernameStatus !== 'available'}>
+      <button type="submit" className="btn-primary" disabled={isSubmitting || !isFormValid}>
         {isSubmitting ? 'Creating account...' : 'Create account'}
         <ArrowUpRight className="icon-sm" />
       </button>
