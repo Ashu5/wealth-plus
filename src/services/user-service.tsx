@@ -1,6 +1,8 @@
 import axios from 'axios';
+import type { UserRegisterRequest } from '../models/user-register-request';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
+console.log('API base URL:', import.meta.env.VITE_API_BASE_URL);
 
 export const trackLoginActivity = async (userEmail: string): Promise<string | undefined> => {
   try {
@@ -68,6 +70,42 @@ export const signIn = async (email: string, password: string) => {
     return response.data;
   } catch (error) {
     console.error('Error signing in:', error);
+    throw error;
+  }
+};
+export const registerUser = async (userData: UserRegisterRequest) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/user/register`,
+      userData,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error registering user:', error);
+    throw error;
+  }
+};
+
+export const assignUsername = async (email: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/user/assignUsername/${encodeURIComponent(email.trim())}`,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error assigning username:', error);
     throw error;
   }
 };
