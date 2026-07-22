@@ -43,11 +43,11 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
       try {
         const response = await profileDetails(storedEmail);
 
-        const profileData = response?.data?.data || response?.data || {};
-        const firstName = profileData?.firstName || profileData?.first_name || '';
-        const lastName = profileData?.lastName || profileData?.last_name || '';
+        const profileData = response?.data || response?.data || {};
+        const firstName = profileData?.firstName  || '';
+        const lastName = profileData?.lastName || '';
         const resolvedFullName = [firstName, lastName].filter(Boolean).join(' ').trim();
-        const profileUsername = profileData?.username || profileData?.userName || '';
+        const profileUsername = profileData?.userName || '';
 
         if (resolvedFullName) {
           setFullName(resolvedFullName);
