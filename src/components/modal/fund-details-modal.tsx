@@ -23,7 +23,6 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
       try {
         const userName =
           localStorage.getItem('wealth-plus-username')?.trim() ||
-          localStorage.getItem('wealth-plus-user')?.trim() ||
           localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
           'ashu01';
 

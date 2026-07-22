@@ -14,7 +14,6 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
     if (!isAuthenticated || !hasSession) {
       sessionStorage.removeItem('wealth-plus-session-id');
       localStorage.removeItem('wealth-plus-auth');
-      localStorage.removeItem('wealth-plus-user');
       localStorage.removeItem('wealth-plus-username');
       localStorage.removeItem('wealth-plus-email');
       localStorage.removeItem('wealth-plus-full-name');

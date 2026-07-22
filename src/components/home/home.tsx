@@ -62,13 +62,13 @@ export default function Homepage() {
 
       const response = await signIn(emailValue, passwordValue);
 
-      if (response!=null) {
+      if (response.status === 200) {
         console.log("Sign-in successful:", response);
         const userEmail = emailValue;
         localStorage.setItem("wealth-plus-auth", "true");
-        localStorage.setItem("wealth-plus-username", response?.username || userEmail.split("@")[0] || "User");
-        localStorage.setItem("wealth-plus-email", response?.email || userEmail);
-        localStorage.setItem("wealth-plus-full-name", response?.firstName + " " + response?.lastName || "Unknown User");
+        localStorage.setItem("wealth-plus-username", response?.data?.userName || userEmail.split("@")[0] || "User");
+        localStorage.setItem("wealth-plus-email", response?.data?.userEmail || userEmail);
+        localStorage.setItem("wealth-plus-full-name", response?.data?.fullName || "Unknown User");
         localStorage.removeItem("wealth-plus-password");
 
         const sessionId = await trackLoginActivity(userEmail);
@@ -130,7 +130,6 @@ export default function Homepage() {
       const { name, email } = event.data;
 
       localStorage.setItem("wealth-plus-auth", "true");
-      localStorage.setItem("wealth-plus-user", name || email?.split("@")[0] || "User");
       localStorage.setItem("wealth-plus-email", email || "");
       localStorage.setItem("wealth-plus-full-name", name || "User");
       localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());

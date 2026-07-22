@@ -109,3 +109,21 @@ export const assignUsername = async (email: string) => {
     throw error;
   }
 };
+
+export const profileDetails = async (userEmail: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/user/profile/${userEmail}`,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching profile details:', error);
+    throw error;
+  }
+};
