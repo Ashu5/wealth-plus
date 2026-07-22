@@ -55,7 +55,7 @@ export default function Homepage() {
     sessionId?: string | null
   ) => {
     const normalizedUserName =
-      typeof payloadRecord.userName === "string" && payloadRecord.userName.trim()
+      typeof payloadRecord?.userName === "string" && payloadRecord.userName.trim()
         ? payloadRecord.userName
         : emailValue.split("@")[0] || "User";
     const normalizedUserEmail =
@@ -83,7 +83,7 @@ export default function Homepage() {
 
   const performSignIn = async (emailValue: string, passwordValue: string) => {
     const response = await signIn(emailValue, passwordValue);
-    const payloadRecord = response?.data as Record<string, unknown>;
+    const payloadRecord = response?.data?.data as Record<string, unknown>;
     const statusCode = response?.status;
     // Debugging: log server response to help diagnose redirect issues
     // (temporary - can be removed once confirmed)
@@ -110,7 +110,6 @@ export default function Homepage() {
       return false;
     }
     if (statusCode === 200 && !alreadyLoggedIn) {
-      console.log("Ashu:", response);
       persistAuthenticatedUser(emailValue, payloadRecord, sessionIdFromPayload);
       setPendingSessionId(null);
       navigate("/dashboard", { replace: true });
