@@ -8,7 +8,7 @@ import Footer from './components/footer/footer';
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('wealth-plus-auth') === 'true';
-  const hasSession = Boolean(sessionStorage.getItem('wealth-plus-session-id'));
+  const hasSession = Boolean(sessionStorage.getItem('wealth-plus-session-id') || isAuthenticated);
 
   useEffect(() => {
     if (!isAuthenticated || !hasSession) {

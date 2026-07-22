@@ -77,6 +77,18 @@
   white-space: nowrap;
 }
 
+.empty-state-banner {
+  margin-top: 8px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 100%);
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
 @media (max-width: 640px) {
   .table-header {
     align-items: flex-start;

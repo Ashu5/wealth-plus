@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, ArrowUpRight } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
-import { signIn, trackLoginActivity } from "../../services/user-service";
+import { signIn, trackLogoutActivity } from "../../services/user-service";
 
 function GoogleMark() {
   return (
@@ -44,47 +44,137 @@ export default function Homepage() {
   const [password, setPassword] = useState("");
   const [registrationMessage, setRegistrationMessage] = useState<string | null>(null);
   const [signInError, setSignInError] = useState<string | null>(null);
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
+
+  const persistAuthenticatedUser = (
+    emailValue: string,
+    payloadRecord: Record<string, unknown>,
+    sessionId?: string | null
+  ) => {
+    const normalizedUserName =
+      typeof payloadRecord.userName === "string" && payloadRecord.userName.trim()
+        ? payloadRecord.userName
+        : emailValue.split("@")[0] || "User";
+    const normalizedUserEmail =
+      typeof payloadRecord.userEmail === "string" && payloadRecord.userEmail.trim()
+        ? payloadRecord.userEmail
+        : emailValue;
+    const normalizedFullName =
+      typeof payloadRecord.fullName === "string" && payloadRecord.fullName.trim()
+        ? payloadRecord.fullName
+        : "Unknown User";
+
+    localStorage.setItem("wealth-plus-auth", "true");
+    localStorage.setItem("wealth-plus-username", normalizedUserName);
+    localStorage.setItem("wealth-plus-email", normalizedUserEmail);
+    localStorage.setItem("wealth-plus-full-name", normalizedFullName);
+    localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
+    localStorage.removeItem("wealth-plus-password");
+
+    if (sessionId) {
+      sessionStorage.setItem("wealth-plus-session-id", sessionId);
+    } else {
+      sessionStorage.setItem("wealth-plus-session-id", `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    }
+  };
+
+  const performSignIn = async (emailValue: string, passwordValue: string) => {
+    const response = await signIn(emailValue, passwordValue);
+    const payloadRecord = response?.data as Record<string, unknown>;
+    const statusCode = response?.status;
+    // Debugging: log server response to help diagnose redirect issues
+    // (temporary - can be removed once confirmed)
+    // eslint-disable-next-line no-console
+    console.debug('performSignIn - response status:', statusCode, 'payload:', payloadRecord);
+    const dataPayload = payloadRecord.data && typeof payloadRecord.data === "object" ? (payloadRecord.data as Record<string, unknown>) : null;
+    const sessionIdFromPayload =
+      typeof payloadRecord.sessionId === "string"
+        ? payloadRecord.sessionId
+        : typeof dataPayload?.sessionId === "string"
+          ? dataPayload.sessionId
+          : null;
+    const message = typeof payloadRecord.message === "string" ? payloadRecord.message : "";
+
+    // Treat a session conflict only when the server explicitly indicates it:
+    // - HTTP 409
+    // - a data flag `alreadyLoggedIn` or an 'already logged' message
+    const alreadyLoggedIn = Boolean(dataPayload?.alreadyLoggedIn) || message.toLowerCase().includes("already logged") || statusCode === 409;
+
+    if (statusCode === 409 || alreadyLoggedIn) {
+      sessionStorage.removeItem("wealth-plus-session-id");
+      setPendingSessionId(sessionIdFromPayload || (typeof dataPayload?.sessionId === "string" ? dataPayload.sessionId : null));
+      setSignInError("This account is already active on another device. Please sign out there first or continue using the existing session.");
+      return false;
+    }
+    if (statusCode === 200 && !alreadyLoggedIn) {
+      console.log("Ashu:", response);
+      persistAuthenticatedUser(emailValue, payloadRecord, sessionIdFromPayload);
+      setPendingSessionId(null);
+      navigate("/dashboard", { replace: true });
+      return true;
+    }
+
+    return false;
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (authMode !== "signin") return;
+    if (isSubmittingRef.current) return;
 
     const emailValue = identifier.trim();
     const passwordValue = password.trim();
 
     if (!emailValue || !passwordValue) return;
 
+
     try {
+      isSubmittingRef.current = true;
       setIsSubmitting(true);
       setSignInError(null);
-
-      const response = await signIn(emailValue, passwordValue);
-
-      if (response.status === 200) {
-        console.log("Sign-in successful:", response);
-        const userEmail = emailValue;
-        localStorage.setItem("wealth-plus-auth", "true");
-        localStorage.setItem("wealth-plus-username", response?.data?.userName || userEmail.split("@")[0] || "User");
-        localStorage.setItem("wealth-plus-email", response?.data?.userEmail || userEmail);
-        localStorage.setItem("wealth-plus-full-name", response?.data?.fullName || "Unknown User");
-        localStorage.removeItem("wealth-plus-password");
-
-        const sessionId = await trackLoginActivity(userEmail);
-        if (sessionId) {
-          sessionStorage.setItem('wealth-plus-session-id', sessionId);
-        }
-
-        navigate("/dashboard");
-      }
+      setSuccessMessage(null);
+      await performSignIn(emailValue, passwordValue);
     } catch (error) {
       console.error("Unable to sign in:", error);
       setPassword("");
       setSignInError("Unauthorised User. Check Password or Register.");
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
-      setPassword("");
+      // if (response?.status == 200) {
+      //   setPassword("");
+      // }
+    }
+  };
+
+  const handleLogoutAndRetrySignIn = async () => {
+    const emailValue = identifier.trim();
+    const passwordValue = password.trim();
+
+    if (!emailValue || !passwordValue || !pendingSessionId) return;
+    console.log("Logging out other device with session ID:", emailValue, pendingSessionId);
+    try {
+      setIsSubmitting(true);
+      setSignInError(null);
+      setSuccessMessage(null);
+      const response = await trackLogoutActivity(emailValue, pendingSessionId);
+      if (response?.status === 200) {
+        console.log("Successfully logged out other device:", response);
+        setPendingSessionId(null);
+        setSuccessMessage("Logged out other device. Pls sign in now.");
+      } else {
+        throw new Error("Logout did not return a successful status.");
+      }
+    } catch (error) {
+      console.error("Unable to logout and sign in:", error);
+      setSuccessMessage(null);
+      setSignInError("We could not log out the other device. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -102,19 +192,19 @@ export default function Homepage() {
     const params =
       provider === "google"
         ? new URLSearchParams({
-            client_id: "YOUR_GOOGLE_CLIENT_ID",
-            redirect_uri: `${window.location.origin}/oauth/google/callback`,
-            response_type: "code",
-            scope: "openid email profile",
-            prompt: "select_account",
-          })
+          client_id: "YOUR_GOOGLE_CLIENT_ID",
+          redirect_uri: `${window.location.origin}/oauth/google/callback`,
+          response_type: "code",
+          scope: "openid email profile",
+          prompt: "select_account",
+        })
         : new URLSearchParams({
-            client_id: "YOUR_APPLE_CLIENT_ID",
-            redirect_uri: `${window.location.origin}/oauth/apple/callback`,
-            response_type: "code",
-            scope: "name email",
-            response_mode: "form_post",
-          });
+          client_id: "YOUR_APPLE_CLIENT_ID",
+          redirect_uri: `${window.location.origin}/oauth/apple/callback`,
+          response_type: "code",
+          scope: "name email",
+          response_mode: "form_post",
+        });
 
     const authUrl = `${baseUrl}?${params.toString()}`;
 
@@ -132,12 +222,14 @@ export default function Homepage() {
       localStorage.setItem("wealth-plus-auth", "true");
       localStorage.setItem("wealth-plus-email", email || "");
       localStorage.setItem("wealth-plus-full-name", name || "User");
+      localStorage.setItem("wealth-plus-username", name || "User");
       localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
       localStorage.setItem("wealth-plus-password", "oauth");
+      sessionStorage.setItem("wealth-plus-session-id", `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
       window.removeEventListener("message", handleMessage);
       popup?.close();
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     };
 
     window.addEventListener("message", handleMessage);
@@ -202,7 +294,22 @@ export default function Homepage() {
                     {registrationMessage}
                   </div>
                 )}
-                {signInError && (
+                {successMessage && (
+                  <div
+                    style={{
+                      marginBottom: 12,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: "rgba(46, 125, 50, 0.12)",
+                      color: "#2e7d32",
+                      fontSize: 13,
+                      border: "1px solid rgba(46, 125, 50, 0.22)",
+                    }}
+                  >
+                    {successMessage}
+                  </div>
+                )}
+                {!successMessage && signInError && (
                   <div
                     style={{
                       marginBottom: 12,
@@ -214,50 +321,76 @@ export default function Homepage() {
                       border: "1px solid rgba(198, 40, 40, 0.22)",
                     }}
                   >
-                    {signInError}
+                    <strong>You are already logged into another device.</strong>
+                    <div style={{ marginTop: 4 }}>Want to login here?</div>
+                    <div style={{ marginTop: 6, fontSize: 12, color: "#8e2a2a" }}>
+                      {signInError}
+                    </div>
+                    {pendingSessionId && (
+                      <button
+                        type="button"
+                        onClick={handleLogoutAndRetrySignIn}
+                        disabled={isSubmitting}
+                        style={{
+                          marginTop: 10,
+                          border: "none",
+                          borderRadius: 8,
+                          padding: "8px 12px",
+                          background: "#1e3a8a",
+                          color: "#fff",
+                          cursor: isSubmitting ? "not-allowed" : "pointer",
+                          fontSize: 12,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {isSubmitting ? "Signing in..." : "Logout from other and Sign in here"}
+                      </button>
+                    )}
                   </div>
                 )}
                 <form className="login-form" onSubmit={handleSubmit}>
-                <label className="field">
-                  <span className="field-label">Email or username</span>
-                  <div className="login-field">
-                    <Mail className="icon-sm" />
-                    <input
-                      type="text"
-                      name="identifier"
-                      placeholder="you@example.com"
-                      autoComplete="username"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                    />
-                  </div>
-                </label>
+                  <label className="field">
+                    <span className="field-label">Email or username</span>
+                    <div className="login-field">
+                      <Mail className="icon-sm" />
+                      <input
+                        type="text"
+                        name="identifier"
+                        placeholder="you@example.com"
+                        autoComplete="username"
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
+                        onFocus={() => setSuccessMessage(null)}
+                      />
+                    </div>
+                  </label>
 
-                <label className="field">
-                  <div className="field-row">
-                    <span className="field-label">Password</span>
-                    <a href="#" className="link-gold" style={{ fontSize: 12 }}>
-                      Forgot password?
-                    </a>
-                  </div>
-                  <div className="login-field">
-                    <Lock className="icon-sm" />
-                    <input
-                      type="password"
-                      name="password"
-                      placeholder="••••••••••"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                </label>
+                  <label className="field">
+                    <div className="field-row">
+                      <span className="field-label">Password</span>
+                      <a href="#" className="link-gold" style={{ fontSize: 12 }}>
+                        Forgot password?
+                      </a>
+                    </div>
+                    <div className="login-field">
+                      <Lock className="icon-sm" />
+                      <input
+                        type="password"
+                        name="password"
+                        placeholder="••••••••••"
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onFocus={() => setSuccessMessage(null)}
+                      />
+                    </div>
+                  </label>
 
-                <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? "Signing in..." : "Sign in"}
-                  <ArrowUpRight className="icon-sm" />
-                </button>
-              </form>
+                  <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                    {isSubmitting ? "Signing in..." : "Sign in"}
+                    <ArrowUpRight className="icon-sm" />
+                  </button>
+                </form>
               </>
             ) : (
               <UserRegistration
