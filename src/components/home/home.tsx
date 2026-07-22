@@ -1,10 +1,10 @@
-import { useState, useRef, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, ArrowUpRight } from "lucide-react";
+import { Lock, Mail, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
-import { signIn, trackLogoutActivity } from "../../services/user-service";
+import { assignUsername, registerUser, signIn, trackLogoutActivity } from "../../services/user-service";
 
 function GoogleMark() {
   return (
@@ -40,14 +40,60 @@ function AppleMark() {
 export default function Homepage() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [identifier, setIdentifier] = useState("");
+  const [identifier, setIdentifier] = useState(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+
+    return localStorage.getItem("wealth-plus-email") || localStorage.getItem("wealth-plus-username") || "";
+  });
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [registrationMessage, setRegistrationMessage] = useState<string | null>(null);
   const [signInError, setSignInError] = useState<string | null>(null);
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
+
+  const resolveUsernameFromPayload = (payload: unknown): string => {
+    if (typeof payload === "string") {
+      return payload.trim();
+    }
+
+    if (Array.isArray(payload)) {
+      for (const item of payload) {
+        const resolved = resolveUsernameFromPayload(item);
+        if (resolved) {
+          return resolved;
+        }
+      }
+      return "";
+    }
+
+    if (payload && typeof payload === "object") {
+      const record = payload as Record<string, unknown>;
+      const candidateKeys = ["username", "userName", "user_name", "assignedUsername", "generatedUsername", "value"];
+
+      for (const key of candidateKeys) {
+        const resolved = resolveUsernameFromPayload(record[key]);
+        if (resolved) {
+          return resolved;
+        }
+      }
+
+      if (record.data !== undefined) {
+        const resolved = resolveUsernameFromPayload(record.data);
+        if (resolved) {
+          return resolved;
+        }
+      }
+    }
+
+    return "";
+  };
 
   const persistAuthenticatedUser = (
     emailValue: string,
@@ -116,6 +162,7 @@ export default function Homepage() {
       return true;
     }
 
+    setSignInError("Invalid email or password.");
     return false;
   };
 
@@ -140,7 +187,7 @@ export default function Homepage() {
     } catch (error) {
       console.error("Unable to sign in:", error);
       setPassword("");
-      setSignInError("Unauthorised User. Check Password or Register.");
+      setSignInError("Invalid email or password.");
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
@@ -182,56 +229,152 @@ export default function Homepage() {
     setAuthMode("signin");
   };
 
-  const handleOAuthLogin = (provider: "google" | "apple") => {
-    const baseUrl =
-      provider === "google"
-        ? "https://accounts.google.com/o/oauth2/v2/auth"
-        : "https://appleid.apple.com/auth/authorize";
+  const handleGoogleCredentialResponse = async (response: { credential?: string }) => {
+    const credential = response?.credential;
+    if (!credential) {
+      setOauthError("Google sign-in was cancelled.");
+      setOauthLoading(false);
+      return;
+    }
 
-    const params =
-      provider === "google"
-        ? new URLSearchParams({
-          client_id: "YOUR_GOOGLE_CLIENT_ID",
-          redirect_uri: `${window.location.origin}/oauth/google/callback`,
-          response_type: "code",
-          scope: "openid email profile",
-          prompt: "select_account",
-        })
-        : new URLSearchParams({
-          client_id: "YOUR_APPLE_CLIENT_ID",
-          redirect_uri: `${window.location.origin}/oauth/apple/callback`,
-          response_type: "code",
-          scope: "name email",
-          response_mode: "form_post",
+    try {
+      setOauthLoading(true);
+      setOauthError(null);
+
+      const payloadSegment = credential.split(".")[1];
+      if (!payloadSegment) {
+        throw new Error("The Google token payload is invalid.");
+      }
+
+      const decodedPayload = JSON.parse(atob(payloadSegment.replace(/-/g, "+").replace(/_/g, "/"))) as {
+        email?: string;
+        given_name?: string;
+        family_name?: string;
+        name?: string;
+      };
+
+      const email = decodedPayload.email?.trim();
+      const firstName = decodedPayload.given_name?.trim() || decodedPayload.name?.split(" ")[0]?.trim() || "User";
+      const lastName = decodedPayload.family_name?.trim() || decodedPayload.name?.split(" ").slice(1).join(" ").trim() || "User";
+
+      if (!email) {
+        throw new Error("Google did not return an email address.");
+      }
+
+      const assignedUsernameResponse = await assignUsername(email);
+      const assignedUsername = resolveUsernameFromPayload(assignedUsernameResponse);
+      const username = assignedUsername || `${firstName}${lastName}`.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 16) || email.split("@")[0];
+
+      const registerResponse = await registerUser({
+        userName: username,
+        password: `oauth-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        email,
+        firstName,
+        lastName,
+        isAdmin: false,
+        isActive: true,
+        isRestrictedUser: false,
+      });
+
+      if (registerResponse?.status === 200 || registerResponse?.status === 201) {
+        persistAuthenticatedUser(email, {
+          userName: username,
+          userEmail: email,
+          fullName: `${firstName} ${lastName}`.trim(),
         });
+        setOauthError(null);
+        navigate("/dashboard", { replace: true });
+        return;
+      }
 
-    const authUrl = `${baseUrl}?${params.toString()}`;
+      throw new Error("Unable to create the Google account right now.");
+    } catch (error) {
+      console.error("Unable to complete Google sign-in:", error);
+      setOauthError("Unable to create your account through Google right now.");
+    } finally {
+      setOauthLoading(false);
+    }
+  };
 
-    const popup = window.open(
-      authUrl,
-      "oauth",
-      "width=500,height=700,left=200,top=100"
-    );
+  useEffect(() => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    if (!googleClientId) {
+      setOauthError("Google sign-in is not configured yet. Add VITE_GOOGLE_CLIENT_ID to your environment.");
+      return;
+    }
 
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type !== "oauth-success") return;
+    const googleSdk = (window as Window & {
+      google?: {
+        accounts?: {
+          id?: {
+            initialize: (options: { client_id: string; callback: (response: { credential?: string }) => void; auto_select: boolean; cancel_on_tap_outside: boolean }) => void;
+            prompt: () => void;
+          };
+        };
+      };
+    }).google;
 
-      const { name, email } = event.data;
+    const initializeGoogleClient = () => {
+      if (!googleSdk?.accounts?.id) {
+        return;
+      }
 
-      localStorage.setItem("wealth-plus-auth", "true");
-      localStorage.setItem("wealth-plus-email", email || "");
-      localStorage.setItem("wealth-plus-full-name", name || "User");
-      localStorage.setItem("wealth-plus-username", name || "User");
-      localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
-      localStorage.setItem("wealth-plus-password", "oauth");
-      sessionStorage.setItem("wealth-plus-session-id", `${Date.now()}-${Math.random().toString(36).slice(2)}`);
-
-      window.removeEventListener("message", handleMessage);
-      popup?.close();
-      navigate("/dashboard", { replace: true });
+      googleSdk.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
     };
 
-    window.addEventListener("message", handleMessage);
+    if ((window as Window & { google?: unknown }).google) {
+      initializeGoogleClient();
+      return;
+    }
+
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", initializeGoogleClient, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogleClient;
+    document.head.appendChild(script);
+  }, []);
+
+  const handleOAuthLogin = (provider: "google" | "apple") => {
+    if (provider === "apple") {
+      setOauthError("Apple sign-in is not enabled yet.");
+      return;
+    }
+
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+    if (!googleClientId) {
+      setOauthError("Google sign-in is not configured yet. Add VITE_GOOGLE_CLIENT_ID to your environment.");
+      return;
+    }
+
+    const googleSdk = (window as Window & {
+      google?: {
+        accounts?: {
+          id?: {
+            prompt: () => void;
+          };
+        };
+      };
+    }).google;
+
+    if (!googleSdk?.accounts?.id) {
+      setOauthError("Google sign-in is not ready yet. Please refresh the page and try again.");
+      return;
+    }
+
+    setOauthError(null);
+    googleSdk.accounts.id.prompt();
   };
 
   return (
@@ -320,30 +463,36 @@ export default function Homepage() {
                       border: "1px solid rgba(198, 40, 40, 0.22)",
                     }}
                   >
-                    <strong>You are already logged into another device.</strong>
-                    <div style={{ marginTop: 4 }}>Want to login here?</div>
-                    <div style={{ marginTop: 6, fontSize: 12, color: "#8e2a2a" }}>
-                      {signInError}
-                    </div>
-                    {pendingSessionId && (
-                      <button
-                        type="button"
-                        onClick={handleLogoutAndRetrySignIn}
-                        disabled={isSubmitting}
-                        style={{
-                          marginTop: 10,
-                          border: "none",
-                          borderRadius: 8,
-                          padding: "8px 12px",
-                          background: "#1e3a8a",
-                          color: "#fff",
-                          cursor: isSubmitting ? "not-allowed" : "pointer",
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {isSubmitting ? "Signing in..." : "Logout from other and Sign in here"}
-                      </button>
+                    {signInError.toLowerCase().includes("already active") || signInError.toLowerCase().includes("another device") ? (
+                      <>
+                        <strong>You are already logged into another device.</strong>
+                        <div style={{ marginTop: 4 }}>Want to login here?</div>
+                        <div style={{ marginTop: 6, fontSize: 12, color: "#8e2a2a" }}>
+                          {signInError}
+                        </div>
+                        {pendingSessionId && (
+                          <button
+                            type="button"
+                            onClick={handleLogoutAndRetrySignIn}
+                            disabled={isSubmitting}
+                            style={{
+                              marginTop: 10,
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "8px 12px",
+                              background: "#1e3a8a",
+                              color: "#fff",
+                              cursor: isSubmitting ? "not-allowed" : "pointer",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {isSubmitting ? "Signing in..." : "Logout from other and Sign in here"}
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div style={{ fontWeight: 600 }}>{signInError}</div>
                     )}
                   </div>
                 )}
@@ -360,6 +509,7 @@ export default function Homepage() {
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
                         onFocus={() => setSuccessMessage(null)}
+                      
                       />
                     </div>
                   </label>
@@ -374,7 +524,7 @@ export default function Homepage() {
                     <div className="login-field">
                       <Lock className="icon-sm" />
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         placeholder="••••••••••"
                         autoComplete="current-password"
@@ -382,6 +532,14 @@ export default function Homepage() {
                         onChange={(e) => setPassword(e.target.value)}
                         onFocus={() => setSuccessMessage(null)}
                       />
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
+                      </button>
                     </div>
                   </label>
 
@@ -405,15 +563,30 @@ export default function Homepage() {
             </div>
 
             <div className="oauth-grid">
-              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("google")}>
+              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("google")} disabled={oauthLoading || isSubmitting}>
                 <GoogleMark />
-                Google
+                {oauthLoading ? "Connecting..." : "Google"}
               </button>
-              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("apple")}>
+              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("apple")} disabled>
                 <AppleMark />
                 Apple
               </button>
             </div>
+            {oauthError && (
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "rgba(198, 40, 40, 0.12)",
+                  color: "#c62828",
+                  fontSize: 13,
+                  border: "1px solid rgba(198, 40, 40, 0.22)",
+                }}
+              >
+                {oauthError}
+              </div>
+            )}
 
             <p className="login-footer">
               {authMode === "signin" ? (

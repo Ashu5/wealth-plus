@@ -84,7 +84,7 @@ export const registerUser = async (userData: UserRegisterRequest) => {
         withCredentials: true
       }
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error registering user:', error);
     throw error;
