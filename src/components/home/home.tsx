@@ -1,10 +1,10 @@
 import { useState, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, ArrowUpRight } from "lucide-react";
+import { Lock, Mail, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
-import { signIn, trackLogoutActivity } from "../../services/user-service";
+import { assignUsername, googleLogin, profileDetails, registerUser, signIn, trackLogoutActivity } from "../../services/user-service";
 
 function GoogleMark() {
   return (
@@ -40,14 +40,60 @@ function AppleMark() {
 export default function Homepage() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [identifier, setIdentifier] = useState("");
+  const [identifier, setIdentifier] = useState(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+
+    return localStorage.getItem("wealth-plus-email") || localStorage.getItem("wealth-plus-username") || "";
+  });
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [registrationMessage, setRegistrationMessage] = useState<string | null>(null);
   const [signInError, setSignInError] = useState<string | null>(null);
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
+
+  const resolveUsernameFromPayload = (payload: unknown): string => {
+    if (typeof payload === "string") {
+      return payload.trim();
+    }
+
+    if (Array.isArray(payload)) {
+      for (const item of payload) {
+        const resolved = resolveUsernameFromPayload(item);
+        if (resolved) {
+          return resolved;
+        }
+      }
+      return "";
+    }
+
+    if (payload && typeof payload === "object") {
+      const record = payload as Record<string, unknown>;
+      const candidateKeys = ["username", "userName", "user_name", "assignedUsername", "generatedUsername", "value"];
+
+      for (const key of candidateKeys) {
+        const resolved = resolveUsernameFromPayload(record[key]);
+        if (resolved) {
+          return resolved;
+        }
+      }
+
+      if (record.data !== undefined) {
+        const resolved = resolveUsernameFromPayload(record.data);
+        if (resolved) {
+          return resolved;
+        }
+      }
+    }
+
+    return "";
+  };
 
   const persistAuthenticatedUser = (
     emailValue: string,
@@ -116,6 +162,7 @@ export default function Homepage() {
       return true;
     }
 
+    setSignInError("Invalid email or password.");
     return false;
   };
 
@@ -140,7 +187,7 @@ export default function Homepage() {
     } catch (error) {
       console.error("Unable to sign in:", error);
       setPassword("");
-      setSignInError("Unauthorised User. Check Password or Register.");
+      setSignInError("Invalid email or password.");
     } finally {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
@@ -182,56 +229,90 @@ export default function Homepage() {
     setAuthMode("signin");
   };
 
-  const handleOAuthLogin = (provider: "google" | "apple") => {
-    const baseUrl =
-      provider === "google"
-        ? "https://accounts.google.com/o/oauth2/v2/auth"
-        : "https://appleid.apple.com/auth/authorize";
+  const handleOAuthLogin = async (provider: "google" | "apple") => {
+    if (provider === "apple") {
+      setOauthError("Apple sign-in is not enabled yet.");
+      return;
+    }
 
-    const params =
-      provider === "google"
-        ? new URLSearchParams({
-          client_id: "YOUR_GOOGLE_CLIENT_ID",
-          redirect_uri: `${window.location.origin}/oauth/google/callback`,
-          response_type: "code",
-          scope: "openid email profile",
-          prompt: "select_account",
-        })
-        : new URLSearchParams({
-          client_id: "YOUR_APPLE_CLIENT_ID",
-          redirect_uri: `${window.location.origin}/oauth/apple/callback`,
-          response_type: "code",
-          scope: "name email",
-          response_mode: "form_post",
-        });
+    try {
+      setOauthLoading(true);
+      setOauthError(null);
 
-    const authUrl = `${baseUrl}?${params.toString()}`;
+      const result = await googleLogin();
+      const user = result.user;
+      const email = user?.email?.trim();
+      const fullName = user?.displayName?.trim() || "User";
 
-    const popup = window.open(
-      authUrl,
-      "oauth",
-      "width=500,height=700,left=200,top=100"
-    );
+      if (!email) {
+        throw new Error("Google did not return an email address.");
+      }
 
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type !== "oauth-success") return;
+      let storedUserName = user?.displayName?.trim() || email.split("@")[0];
+      let storedFullName = fullName;
 
-      const { name, email } = event.data;
+      try {
+        const profileResponse = await profileDetails(email);
+        const profileRecord = profileResponse && typeof profileResponse === "object"
+          ? (profileResponse as Record<string, unknown>)
+          : null;
+        const profileData = profileRecord?.data && typeof profileRecord.data === "object"
+          ? (profileRecord.data as Record<string, unknown>)
+          : profileRecord;
 
-      localStorage.setItem("wealth-plus-auth", "true");
-      localStorage.setItem("wealth-plus-email", email || "");
-      localStorage.setItem("wealth-plus-full-name", name || "User");
-      localStorage.setItem("wealth-plus-username", name || "User");
-      localStorage.setItem("wealth-plus-last-login", new Date().toLocaleString());
-      localStorage.setItem("wealth-plus-password", "oauth");
-      sessionStorage.setItem("wealth-plus-session-id", `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+        if (profileData) {
+          storedUserName =
+            typeof profileData?.userName === "string" && profileData.userName.trim()
+              ? profileData.userName
+              : typeof profileData?.username === "string" && profileData.username.trim()
+                ? profileData.username
+                : storedUserName;
+          storedFullName =
+            typeof profileData?.fullName === "string" && profileData.fullName.trim()
+              ? profileData.fullName
+              : typeof profileData?.firstName === "string" || typeof profileData?.lastName === "string"
+                ? [profileData?.firstName, profileData?.lastName].filter(Boolean).join(" ").trim() || storedFullName
+                : storedFullName;
+        } else {
+          const assignedUsernameResponse = await assignUsername(email);
+          const assignedUsername = resolveUsernameFromPayload(assignedUsernameResponse);
+          const username = assignedUsername || storedUserName.replace(/[^a-zA-Z0-9]+/g, "").slice(0, 20) || email.split("@")[0];
+          const firstName = fullName.split(" ")[0]?.trim() || "User";
+          const lastName = fullName.split(" ").slice(1).join(" ").trim() || "User";
 
-      window.removeEventListener("message", handleMessage);
-      popup?.close();
+          const createResponse = await registerUser({
+            userName: username,
+            password: `oauth-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+            email,
+            firstName,
+            lastName,
+            isAdmin: false,
+            isActive: true,
+            isRestrictedUser: false,
+          });
+
+          if (createResponse?.status === 200 || createResponse?.status === 201) {
+            storedUserName = username;
+            storedFullName = `${firstName} ${lastName}`.trim();
+          }
+        }
+      } catch (error) {
+        console.warn("Google profile lookup failed, falling back to Google data:", error);
+      }
+
+      persistAuthenticatedUser(email, {
+        userName: storedUserName,
+        userEmail: email,
+        fullName: storedFullName,
+      });
+
       navigate("/dashboard", { replace: true });
-    };
-
-    window.addEventListener("message", handleMessage);
+    } catch (error) {
+      console.error("Unable to complete Google sign-in:", error);
+      setOauthError("Unable to sign in with Google right now.");
+    } finally {
+      setOauthLoading(false);
+    }
   };
 
   return (
@@ -320,30 +401,36 @@ export default function Homepage() {
                       border: "1px solid rgba(198, 40, 40, 0.22)",
                     }}
                   >
-                    <strong>You are already logged into another device.</strong>
-                    <div style={{ marginTop: 4 }}>Want to login here?</div>
-                    <div style={{ marginTop: 6, fontSize: 12, color: "#8e2a2a" }}>
-                      {signInError}
-                    </div>
-                    {pendingSessionId && (
-                      <button
-                        type="button"
-                        onClick={handleLogoutAndRetrySignIn}
-                        disabled={isSubmitting}
-                        style={{
-                          marginTop: 10,
-                          border: "none",
-                          borderRadius: 8,
-                          padding: "8px 12px",
-                          background: "#1e3a8a",
-                          color: "#fff",
-                          cursor: isSubmitting ? "not-allowed" : "pointer",
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {isSubmitting ? "Signing in..." : "Logout from other and Sign in here"}
-                      </button>
+                    {signInError.toLowerCase().includes("already active") || signInError.toLowerCase().includes("another device") ? (
+                      <>
+                        <strong>You are already logged into another device.</strong>
+                        <div style={{ marginTop: 4 }}>Want to login here?</div>
+                        <div style={{ marginTop: 6, fontSize: 12, color: "#8e2a2a" }}>
+                          {signInError}
+                        </div>
+                        {pendingSessionId && (
+                          <button
+                            type="button"
+                            onClick={handleLogoutAndRetrySignIn}
+                            disabled={isSubmitting}
+                            style={{
+                              marginTop: 10,
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "8px 12px",
+                              background: "#1e3a8a",
+                              color: "#fff",
+                              cursor: isSubmitting ? "not-allowed" : "pointer",
+                              fontSize: 12,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {isSubmitting ? "Signing in..." : "Logout from other and Sign in here"}
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div style={{ fontWeight: 600 }}>{signInError}</div>
                     )}
                   </div>
                 )}
@@ -360,6 +447,7 @@ export default function Homepage() {
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
                         onFocus={() => setSuccessMessage(null)}
+                      
                       />
                     </div>
                   </label>
@@ -374,7 +462,7 @@ export default function Homepage() {
                     <div className="login-field">
                       <Lock className="icon-sm" />
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         placeholder="••••••••••"
                         autoComplete="current-password"
@@ -382,6 +470,14 @@ export default function Homepage() {
                         onChange={(e) => setPassword(e.target.value)}
                         onFocus={() => setSuccessMessage(null)}
                       />
+                      <button
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
+                      </button>
                     </div>
                   </label>
 
@@ -405,15 +501,30 @@ export default function Homepage() {
             </div>
 
             <div className="oauth-grid">
-              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("google")}>
+              <button type="button" className="btn-oauth" onClick={() => void handleOAuthLogin("google")} disabled={oauthLoading || isSubmitting}>
                 <GoogleMark />
-                Google
+                {oauthLoading ? "Connecting..." : "Google"}
               </button>
-              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("apple")}>
+              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("apple")} disabled>
                 <AppleMark />
                 Apple
               </button>
             </div>
+            {oauthError && (
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "rgba(198, 40, 40, 0.12)",
+                  color: "#c62828",
+                  fontSize: 13,
+                  border: "1px solid rgba(198, 40, 40, 0.22)",
+                }}
+              >
+                {oauthError}
+              </div>
+            )}
 
             <p className="login-footer">
               {authMode === "signin" ? (
