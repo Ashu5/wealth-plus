@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import axios from 'axios';
 import { ArrowUpRight, CheckCircle2, Lock, Mail, UserRound } from 'lucide-react';
-
+import { assignUsername } from '../../services/user-service';
 type UserRegistrationProps = {
   onSwitchToLogin: () => void;
   onRegistrationSuccess?: () => void;
@@ -66,9 +66,9 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
       setUsernameStatus('checking');
 
       try {
-        const response = await axios.get(`/wealth-plus/api/user/assignUsername/${encodeURIComponent(email.trim())}`);
-        const assignedUsername = resolveUsernameFromPayload(response?.data);
-
+        const response = await assignUsername(`${email.trim()}`);
+        const assignedUsername = resolveUsernameFromPayload(response);
+        console.log('Assigned username:', response  );
         if (assignedUsername) {
           setUsername(assignedUsername);
           setUsernameStatus('available');

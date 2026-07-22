@@ -3,17 +3,18 @@ import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig({
+  
   plugins: [react()],
   server: {
     proxy: {
-      '/api/auth': {
-        target: 'http://${process.env.VITE_API_HOST}/wealth-plus/api/user',
+      '/user/sigin': {
+        target: 'http://localhost:8080/wealth-plus/api/user',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/auth/, ''),
       },
       '/wealth-plus': {
-        target: 'http://${process.env.VITE_API_HOST}/wealth-plus',
+        target: 'http://localhost:8080/wealth-plus',
         changeOrigin: true,
         secure: false,
       },
