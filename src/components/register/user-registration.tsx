@@ -116,7 +116,6 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
           isActive: true,
           isRestrictedUser: false
         }
-        console.log("request payload:",registerRequest);
        const response=await registerUser(registerRequest);
 
       if (response?.status === 200 || response?.status === 201) {
@@ -201,6 +200,7 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
             minLength={MIN_PASS_LENGTH}
             autoComplete="new-password"
             value={password}
+            
             onChange={(e) => setPassword(e.target.value)}
             required
           />

@@ -56,10 +56,10 @@ export const trackLogoutActivity = async (userEmail: string, sessionId: string) 
   }
 };
 
-export const signIn = async (email: string, password: string) => {
+export const login = async (email: string, password: string) => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/user/signin`,
+      `${API_BASE_URL}/auth/login`,
       {
         email,
         password,
@@ -139,7 +139,7 @@ export const googleLogin = async () => {
   const token = await user.getIdToken();
 
   const response = await axios.post(
-    `${API_BASE_URL}/user/sso-login`,
+    `${API_BASE_URL}/auth/sso-login`,
     {},
     {
       headers: {
@@ -153,3 +153,21 @@ export const googleLogin = async () => {
   return { user, token, response };
 };
 
+export const resetPassword = async (token: string, newPassword: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/update/resetPassword`,
+      { token, newPassword },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    throw error;
+  }
+};
