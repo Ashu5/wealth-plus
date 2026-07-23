@@ -4,7 +4,7 @@ import { Lock, Mail, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
-import { assignUsername, googleLogin, profileDetails, registerUser, signIn, trackLogoutActivity } from "../../services/user-service";
+import { assignUsername, googleLogin, login, profileDetails, registerUser, trackLogoutActivity } from "../../services/user-service";
 
 function GoogleMark() {
   return (
@@ -125,7 +125,7 @@ export default function Homepage() {
   };
 
   const performSignIn = async (emailValue: string, passwordValue: string) => {
-    const response = await signIn(emailValue, passwordValue);
+    const response = await login(emailValue, passwordValue);
     const payloadRecord = response?.data?.data as Record<string, unknown>;
     const statusCode = response?.status;
     // Debugging: log server response to help diagnose redirect issues
