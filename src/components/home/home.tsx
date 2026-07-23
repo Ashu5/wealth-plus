@@ -29,14 +29,6 @@ function GoogleMark() {
   );
 }
 
-function AppleMark() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 384 512" aria-hidden="true" fill="#E9E7DF">
-      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
-    </svg>
-  );
-}
-
 export default function Homepage() {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
@@ -56,6 +48,11 @@ export default function Homepage() {
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState<string | null>(null);
+  const [forgotPasswordError, setForgotPasswordError] = useState<string | null>(null);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isForgotPasswordSubmitting, setIsForgotPasswordSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
 
   const resolveUsernameFromPayload = (payload: unknown): string => {
@@ -229,12 +226,41 @@ export default function Homepage() {
     setAuthMode("signin");
   };
 
-  const handleOAuthLogin = async (provider: "google" | "apple") => {
-    if (provider === "apple") {
-      setOauthError("Apple sign-in is not enabled yet.");
+  const handleForgotPassword = async () => {
+    const emailValue = (forgotPasswordEmail || identifier).trim();
+
+    if (!emailValue) {
+      setForgotPasswordError("Please enter an email address.");
       return;
     }
 
+    try {
+      setIsForgotPasswordSubmitting(true);
+      setForgotPasswordError(null);
+      setForgotPasswordMessage(null);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/wealth-plus/api"}/update/forgotPassword`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: emailValue }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to process the request.");
+      }
+
+      setForgotPasswordMessage("An email has been sent on your email ID. Follow the instructions to reset the password.");
+      setForgotPasswordEmail(emailValue);
+    } catch (error) {
+      console.error("Unable to send forgot password request:", error);
+      setForgotPasswordError("We could not process your request right now.");
+    } finally {
+      setIsForgotPasswordSubmitting(false);
+    }
+  };
+
+  const handleOAuthLogin = async () => {
     try {
       setOauthLoading(true);
       setOauthError(null);
@@ -332,6 +358,7 @@ export default function Homepage() {
 
       <main className="main-grid">
         <section className="hero">
+        
           <p className="hero-eyebrow font-mono-data">PORTFOLIO INTELLIGENCE</p>
           <h1 className="hero-title font-display">
             Track every basis point,
@@ -353,9 +380,17 @@ export default function Homepage() {
               </p>
             </div>
 
-            <h2 className="login-title font-display">
-              {authMode === "signin" ? "Welcome back" : "Open door to your portfolio"}
-            </h2>
+            <div className="login-card-top">
+              <div>
+                <h2 className="login-title font-display">
+                  {authMode === "signin" ? "Welcome back" : "Open door to your portfolio"}
+                </h2>
+                <p className="login-copy">
+                  Secure access to your portfolio, transactions, and account activity.
+                </p>
+              </div>
+              <span className="login-badge">Protected</span>
+            </div>
 
             {authMode === "signin" ? (
               <>
@@ -455,9 +490,14 @@ export default function Homepage() {
                   <label className="field">
                     <div className="field-row">
                       <span className="field-label">Password</span>
-                      <a href="#" className="link-gold" style={{ fontSize: 12 }}>
+                      <button
+                        type="button"
+                        className="link-gold"
+                        style={{ fontSize: 12, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                        onClick={() => setIsForgotPasswordOpen(true)}
+                      >
                         Forgot password?
-                      </a>
+                      </button>
                     </div>
                     <div className="login-field">
                       <Lock className="icon-sm" />
@@ -496,18 +536,14 @@ export default function Homepage() {
 
             <div className="divider">
               <div className="line" />
-              <span className="label">OR CONTINUE WITH</span>
+              <span className="label">CONTINUE WITH</span>
               <div className="line" />
             </div>
 
             <div className="oauth-grid">
-              <button type="button" className="btn-oauth" onClick={() => void handleOAuthLogin("google")} disabled={oauthLoading || isSubmitting}>
+              <button type="button" className="btn-oauth" onClick={() => void handleOAuthLogin()} disabled={oauthLoading || isSubmitting}>
                 <GoogleMark />
                 {oauthLoading ? "Connecting..." : "Google"}
-              </button>
-              <button type="button" className="btn-oauth" onClick={() => handleOAuthLogin("apple")} disabled>
-                <AppleMark />
-                Apple
               </button>
             </div>
             {oauthError && (
@@ -554,6 +590,53 @@ export default function Homepage() {
           </div>
         </aside>
       </main>
+
+      {isForgotPasswordOpen && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Reset password">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3 className="modal-title">Reset Password</h3>
+              <button type="button" className="modal-close" onClick={() => setIsForgotPasswordOpen(false)} aria-label="Close reset password modal">
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <label className="field">
+                <span className="field-label">Email address</span>
+                <div className="login-field">
+                  <Mail className="icon-sm" />
+                  <input
+                    type="email"
+                    name="forgotPasswordEmail"
+                    placeholder="you@example.com"
+                    value={forgotPasswordEmail || identifier}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                  />
+                </div>
+              </label>
+
+              {forgotPasswordMessage && (
+                <div className="modal-success-message">
+                  <span className="modal-success-icon">✓</span>
+                  <span>{forgotPasswordMessage}</span>
+                </div>
+              )}
+
+              {forgotPasswordError && (
+                <div className="modal-error-message">{forgotPasswordError}</div>
+              )}
+
+              {!forgotPasswordMessage && (
+                <button type="button" className="btn-primary modal-action-btn" onClick={() => void handleForgotPassword()} disabled={isForgotPasswordSubmitting}>
+                  {isForgotPasswordSubmitting ? "Sending..." : "Reset Password"}
+                  <ArrowUpRight className="icon-sm" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

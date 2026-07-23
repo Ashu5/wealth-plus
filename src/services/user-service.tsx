@@ -153,3 +153,21 @@ export const googleLogin = async () => {
   return { user, token, response };
 };
 
+export const resetPassword = async (token: string, newPassword: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/update/resetPassword`,
+      { token, newPassword },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    throw error;
+  }
+};
