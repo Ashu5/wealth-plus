@@ -126,41 +126,54 @@ export default function Homepage() {
 
   const performSignIn = async (emailValue: string, passwordValue: string) => {
     const response = await login(emailValue, passwordValue);
-    const payloadRecord = response?.data?.data as Record<string, unknown>;
-    const statusCode = response?.status;
-    // Debugging: log server response to help diagnose redirect issues
-    // (temporary - can be removed once confirmed)
-    // eslint-disable-next-line no-console
-    console.debug('performSignIn - response status:', statusCode, 'payload:', payloadRecord);
-    const dataPayload = payloadRecord.data && typeof payloadRecord.data === "object" ? (payloadRecord.data as Record<string, unknown>) : null;
+    const payloadRecord = response?.data && typeof response.data === "object" ? (response.data as Record<string, unknown>) : {};
+    const nestedPayload = payloadRecord.data && typeof payloadRecord.data === "object" ? (payloadRecord.data as Record<string, unknown>) : null;
+    const statusCode = typeof response?.data?.status === "number"
+      ? response?.data?.status
+      : typeof payloadRecord.status === "number"
+        ? payloadRecord.status
+        : typeof nestedPayload?.status === "number"
+          ? nestedPayload.status
+          : 0;
     const sessionIdFromPayload =
       typeof payloadRecord.sessionId === "string"
         ? payloadRecord.sessionId
-        : typeof dataPayload?.sessionId === "string"
-          ? dataPayload.sessionId
+        : typeof nestedPayload?.sessionId === "string"
+          ? nestedPayload.sessionId
           : null;
-    const message = typeof payloadRecord.message === "string" ? payloadRecord.message : "";
+    const message = typeof payloadRecord.message === "string"
+      ? payloadRecord.message
+      : typeof nestedPayload?.message === "string"
+        ? nestedPayload.message
+        : "";
 
-    // Treat a session conflict only when the server explicitly indicates it:
-    // - HTTP 409
-    // - a data flag `alreadyLoggedIn` or an 'already logged' message
-    const alreadyLoggedIn = Boolean(dataPayload?.alreadyLoggedIn) || message.toLowerCase().includes("already logged") || statusCode === 409;
+    const alreadyLoggedIn = Boolean(nestedPayload?.alreadyLoggedIn) || message.toLowerCase().includes("already logged") || statusCode === 409;
+    const userPayload = (nestedPayload || payloadRecord) as Record<string, unknown>;
 
     if (statusCode === 409 || alreadyLoggedIn) {
       sessionStorage.removeItem("wealth-plus-session-id");
-      setPendingSessionId(sessionIdFromPayload || (typeof dataPayload?.sessionId === "string" ? dataPayload.sessionId : null));
+      setPendingSessionId(sessionIdFromPayload);
       setSignInError("This account is already active on another device. Please sign out there first or continue using the existing session.");
       return false;
     }
+
+    if (statusCode === 401) {
+      setPendingSessionId(null);
+      setSignInError("Your credentials are incorrect or your session has expired. Please try again.");
+      return false;
+    }
+
+
     if (statusCode === 200 && !alreadyLoggedIn) {
-      persistAuthenticatedUser(emailValue, payloadRecord, sessionIdFromPayload);
+      persistAuthenticatedUser(emailValue, userPayload, sessionIdFromPayload);
       setPendingSessionId(null);
       navigate("/dashboard", { replace: true });
       return true;
     }
-
-    setSignInError("Invalid email or password.");
-    return false;
+    if(statusCode === 500) {  
+      setSignInError("Invalid email or password.");
+      return false;
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {

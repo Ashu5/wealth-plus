@@ -71,9 +71,31 @@ export const login = async (email: string, password: string) => {
         withCredentials: true,
       }
     );
+    console.log('Login response:', response);
     return response;
   } catch (error) {
     console.error('Error signing in:', error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      const errorResponse = error.response;
+      const payload = errorResponse.data;
+      const normalizedPayload =
+        typeof payload === 'object' && payload !== null
+          ? (payload as Record<string, unknown>)
+          : { message: typeof payload === 'string' ? payload : 'Unable to sign in.' };
+
+      if (typeof normalizedPayload.status !== 'number') {
+        normalizedPayload.status = errorResponse.status;
+      }
+
+      return {
+        status: errorResponse.status,
+        data: normalizedPayload,
+        headers: errorResponse.headers,
+        config: errorResponse.config,
+      };
+    }
+
     throw error;
   }
 };

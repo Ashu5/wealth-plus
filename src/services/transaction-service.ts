@@ -11,7 +11,7 @@ export interface FundTransaction {
   transactionDate: string;
   nav: number;
   units: number;
-  username: string | null;
+  userName: string | null;
 }
 
 export const fetchUserFundTransactions = async (userName: string, fundName: string) => {
@@ -25,6 +25,17 @@ export const fetchUserFundTransactions = async (userName: string, fundName: stri
     return response.data;
   } catch (error) {
     console.error('Error fetching fund transactions:', error);
+    throw error;
+  }
+};
+
+export const addFundTransaction = async (transaction: FundTransaction) => {
+  const url = `${API_BASE_URL}/transactions/addFundTransaction`;
+  try {
+    const response = await axios.post(url, transaction);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding fund transaction:', error);
     throw error;
   }
 };
