@@ -279,12 +279,16 @@ function AppShell() {
           }
         />
         <Route
-          path="*"
+          path="/contact"
           element={
-            <AccessErrorPage
-              title="Page Not Found"
-              message="This page does not exist or cannot be opened directly."
-            />
+            <ProtectedRoute>
+              <>
+                <Header />
+                <Breadcrumb />
+                <ContactPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
           }
         />
         <Route
