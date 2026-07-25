@@ -56,7 +56,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
         }
 
         const responseData = response && typeof response === 'object' && 'data' in response
-          ? (response as any).data
+          ? (response as { data?: unknown }).data
           : response;
 
         const generatedCode = typeof responseData === 'string'
@@ -74,7 +74,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
 
         setFundMasterData((prev) => ({ ...prev, fundCode: generatedCode }));
         setGeneratedFor({ fundName, fundType, folioPrefix });
-      } catch (error) {
+      } catch {
         if (!cancelled) {
           setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
           setCodeError('Unable to generate fund code.');
