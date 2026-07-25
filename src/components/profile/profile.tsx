@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileDetails from './profile-details';
 import './profile.css';
-import { trackLogoutActivity } from '../../services/user-service';
+import { profileDetails, trackLogoutActivity } from '../../services/user-service';
 
 function ProfileComponent() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('Guest');
   const [menuOpen, setMenuOpen] = useState(false);
   const [showProfileDetails, setShowProfileDetails] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -16,6 +17,27 @@ function ProfileComponent() {
     if (storedUser) {
       setUserName(storedUser);
     }
+
+    const loadAdminAccess = async () => {
+      const storedEmail = localStorage.getItem('wealth-plus-email')?.trim();
+      if (!storedEmail) {
+        return;
+      }
+
+      try {
+        const response = await profileDetails(storedEmail);
+        const profileData = response?.data ?? response;
+        const normalizedRole = typeof profileData?.role === 'string' ? profileData.role : '';
+        const adminFlag = Boolean(profileData?.isAdmin);
+        const isAdminUser = adminFlag || normalizedRole === 'ADMIN' || normalizedRole === 'SUPER_ADMIN';
+        setIsAdmin(isAdminUser);
+      } catch (error) {
+        console.error('Unable to resolve admin access:', error);
+        setIsAdmin(false);
+      }
+    };
+
+    void loadAdminAccess();
   }, []);
 
   useEffect(() => {
@@ -95,9 +117,19 @@ function ProfileComponent() {
               My Profile
             </button>
 
-            <button type="button" className="profile-menu-item" role="menuitem">
-              Settings
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                className="profile-menu-item"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate('/admin');
+                }}
+              >
+                Admin Panel
+              </button>
+            )}
 
             <button
               type="button"
