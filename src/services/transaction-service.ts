@@ -30,7 +30,7 @@ export const fetchUserFundTransactions = async (userName: string, fundName: stri
 };
 
 export const addFundTransaction = async (transaction: FundTransaction) => {
-  const url = `${API_BASE_URL}/transactions/addFundTransaction`;
+  const url = `${API_BASE_URL}/transactions/newTransaction`;
   try {
     const response = await axios.post(url, transaction);
     return response.data;
