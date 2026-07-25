@@ -457,6 +457,7 @@ th {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  color: #DFDEDE;
 }
 
 .modal-close {
@@ -477,7 +478,7 @@ th {
 .field-group label {
   font-size: 13px;
   font-weight: 600;
-  color: #191a1b;
+  color: #b1d8ff;
 }
 
 .field-group input,

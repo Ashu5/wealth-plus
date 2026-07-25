@@ -56,10 +56,10 @@ export const trackLogoutActivity = async (userEmail: string, sessionId: string) 
   }
 };
 
-export const signIn = async (email: string, password: string) => {
+export const login = async (email: string, password: string) => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/user/signin`,
+      `${API_BASE_URL}/auth/login`,
       {
         email,
         password,
@@ -71,9 +71,31 @@ export const signIn = async (email: string, password: string) => {
         withCredentials: true,
       }
     );
+    console.log('Login response:', response);
     return response;
   } catch (error) {
     console.error('Error signing in:', error);
+
+    if (axios.isAxiosError(error) && error.response) {
+      const errorResponse = error.response;
+      const payload = errorResponse.data;
+      const normalizedPayload =
+        typeof payload === 'object' && payload !== null
+          ? (payload as Record<string, unknown>)
+          : { message: typeof payload === 'string' ? payload : 'Unable to sign in.' };
+
+      if (typeof normalizedPayload.status !== 'number') {
+        normalizedPayload.status = errorResponse.status;
+      }
+
+      return {
+        status: errorResponse.status,
+        data: normalizedPayload,
+        headers: errorResponse.headers,
+        config: errorResponse.config,
+      };
+    }
+
     throw error;
   }
 };
@@ -139,7 +161,7 @@ export const googleLogin = async () => {
   const token = await user.getIdToken();
 
   const response = await axios.post(
-    `${API_BASE_URL}/user/sso-login`,
+    `${API_BASE_URL}/auth/sso-login`,
     {},
     {
       headers: {
@@ -153,3 +175,21 @@ export const googleLogin = async () => {
   return { user, token, response };
 };
 
+export const resetPassword = async (token: string, newPassword: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/update/resetPassword`,
+      { token, newPassword },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    throw error;
+  }
+};
