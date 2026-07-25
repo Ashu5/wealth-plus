@@ -150,7 +150,7 @@ function FixedDepositsSummarySection({
 
   return (
     <section className="fd-card">
-      <div className="table-header">
+      <div className="table-header fd-header-shell">
         <div>
           <p className="eyebrow">Fixed Deposits</p>
           <h2>Fixed Deposits Summary</h2>
@@ -168,26 +168,30 @@ function FixedDepositsSummarySection({
         </div>
       </div>
 
+      <div className="fd-center-action">
+        <button type="button" className="fd-action-pill" onClick={onAddFD}>
+          <span className="fd-action-icon">＋</span>
+          <span>Track FD</span>
+        </button>
+      </div>
+
       {isLoading ? (
         <div className="fd-loading-state">
           <p>Loading fixed deposit data...</p>
         </div>
       ) : error ? (
         <div className="fd-error-state">
-          <p>{error}</p>
-          <button type="button" className="add-fd-btn" onClick={onAddFD}>
-            Add FD
-          </button>
+          <div className="fd-state-card">
+            <p className="eyebrow">Update needed</p>
+            <h3>{error}</h3>
+          </div>
         </div>
       ) : entries.length === 0 ? (
         <div className="fd-empty-state">
           <div className="fd-empty-state-content">
-            <p className="eyebrow">Start tracking your FD portfolio</p>
-            <h3>Add your FD details to track your investments</h3>
-            <p>Once you add fixed deposit details, you'll be able to monitor maturity, interest and returns in one place.</p>
-            <button type="button" className="add-fd-btn" onClick={onAddFD}>
-              Add FD
-            </button>
+            <div className="fd-empty-icon">🏦</div>
+            <p className="eyebrow">No fixed deposits yet</p>
+            <h3>Add your first FD</h3>
           </div>
         </div>
       ) : (

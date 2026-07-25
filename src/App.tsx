@@ -5,9 +5,11 @@ import Homepage from './components/home/home';
 import Header from './components/header/header';
 import Footer from './components/footer/footer';
 import ResetPasswordPage from './components/reset-password/reset-password';
+import FundTransactionsPage from './components/fundtransactions/fund-transactions';
+import MyFundsPage from './components/fundmaster/my-funds-page';
+import MyJourneyPage from './components/myjourney/my-journey-page';
 import AdminPage from './components/admin/admin-page';
 import { searchUsers } from './services/admin-service';
-
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('wealth-plus-auth') === 'true';
@@ -125,6 +127,39 @@ function AppShell() {
           }
         />
         <Route
+          path="/fund-transactions"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <FundTransactionsPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-funds"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <MyFundsPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-journey"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <MyJourneyPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
           path="/admin"
           element={
             <AdminRoute>
@@ -134,6 +169,7 @@ function AppShell() {
                 <Footer />
               </>
             </AdminRoute>
+
           }
         />
       </Routes>

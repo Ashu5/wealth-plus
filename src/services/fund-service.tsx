@@ -32,6 +32,25 @@ export const getUserFunds = async (userId: string) => {
     }
 };
 
+export const updateFund = async (fundId: string, fundData: any) => {
+    try {
+        const response = await axios.put(
+            `${API_BASE_URL}/fund-master/updateFund/${encodeURIComponent(fundId)}`,
+            fundData,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error("Error updating fund:", error);
+        throw error;
+    }
+};
+
 export const generateFundCode = async (params: { fundName: string; fundType: string; folioNumber: string }) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/fund-master/generateFundCode`, {
