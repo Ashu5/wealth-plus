@@ -1,8 +1,8 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
-import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { getUserFunds } from '../../services/fund-service';
+import { addFundTransaction, type FundTransaction } from '../../services/transaction-service';
 
 type AddTrackingModalProps = {
   isOpen: boolean;
@@ -33,10 +33,10 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
     fundName: '',
     fundCode: '',
     fundType: '',
-    amount: '',
-    nav: '',
-    units: '',
-    userId: '',
+    amount: 0,
+    nav: 0,
+    units: 0,
+    userName: '',
     folioNumber: '',
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -90,7 +90,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
               fundCode: normalizedFunds[0].fundCode,
               fundType: normalizedFunds[0].fundType,
               folioNumber: normalizedFunds[0].folioNumber,
-              userId,
+              userName: userId,
             }));
             setIsLoadingFunds(false);
             return;
@@ -113,7 +113,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
 
   useEffect(() => {
     if (!trackingData.amount || !trackingData.nav) {
-      setTrackingData((prev) => ({ ...prev, units: '' }));
+      setTrackingData((prev) => ({ ...prev, units: 0 }));
       return;
     }
 
@@ -121,7 +121,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
     const nav = Number(trackingData.nav);
 
     if (amount > 0 && nav > 0) {
-      const calculatedUnits = (amount / nav).toFixed(3);
+      const calculatedUnits: any= (amount / nav).toFixed(3);
       setTrackingData((prev) => ({ ...prev, units: calculatedUnits }));
     }
   }, [trackingData.amount, trackingData.nav]);
@@ -165,10 +165,10 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
       fundName: '',
       fundCode: '',
       fundType: '',
-      amount: '',
-      nav: '',
-      units: '',
-      userId: '',
+      amount: 0,
+      nav: 0,
+      units: 0,
+      userName: '',
       folioNumber: '',
     });
     setSelectedDate(new Date());
@@ -178,15 +178,15 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const currentUser = localStorage.getItem('wealth-plus-username')?.trim() || localStorage.getItem('wealth-plus-username')?.split('@')[0]?.trim() || 'ashu01';
+    const currentUser = localStorage.getItem('wealth-plus-username')?.trim() || localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() || 'null';
 
-    const payload = {
+    const payload :FundTransaction= {
       folioNumber: trackingData.folioNumber || '002',
       fundName: trackingData.fundName,
       fundType: trackingData.fundType,
       amount: trackingData.amount,
+      transactionDate:formatSelectedDate(selectedDate),
       fundCode: trackingData.fundCode,
-      transactionDate: formatSelectedDate(selectedDate),
       nav: Number(trackingData.nav),
       units: Number(trackingData.units),
       userName: currentUser,
@@ -195,21 +195,16 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
 
     try {
       setIsSubmitting(true);
-      const response = await axios.post('/wealth-plus/api/transactions/newTransaction', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
+      const response = await addFundTransaction(payload);
       if (response?.status === 200 || response?.status === 201) {
         setTrackingData({
           fundName: '',
           fundCode: '',
           fundType: '',
-          amount: '',
-          nav: '',
-          units: '',
-          userId: '',
+          amount: 0,
+          nav: 0,
+          units: 0,
+          userName: '',
           folioNumber: '',
         });
         setSelectedDate(new Date());
@@ -222,6 +217,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
       } else {
         window.alert('Unable to save tracking right now.');
       }
+
     } catch (error) {
       console.error('Unable to save tracking:', error);
       window.alert('Unable to save tracking right now.');
