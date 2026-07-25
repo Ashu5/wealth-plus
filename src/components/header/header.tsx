@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './header.css';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/wealth_plus.png';
 import ProfileComponent from '../profile/profile';
 
 function Header() {
@@ -22,7 +22,7 @@ function Header() {
 
   const handleNavigate = (path: string) => {
     setMenuOpen(false);
-    navigate(path);
+    navigate(path, { state: { fromApp: true } });
   };
 
   return (

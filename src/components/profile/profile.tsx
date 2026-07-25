@@ -124,7 +124,7 @@ function ProfileComponent() {
                 role="menuitem"
                 onClick={() => {
                   setMenuOpen(false);
-                  navigate('/admin');
+                  navigate('/admin', { state: { fromApp: true } });
                 }}
               >
                 Admin Panel

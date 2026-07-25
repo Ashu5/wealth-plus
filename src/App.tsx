@@ -9,6 +9,8 @@ import FundTransactionsPage from './components/fundtransactions/fund-transaction
 import MyFundsPage from './components/fundmaster/my-funds-page';
 import MyJourneyPage from './components/myjourney/my-journey-page';
 import AdminPage from './components/admin/admin-page';
+import Breadcrumb from './components/breadcrumb/breadcrumb';
+import ContactPage from './components/contact/contact-page';
 import { searchUsers } from './services/admin-service';
 
 const INTERNAL_ROUTE_ACCESS_KEY = 'wealth-plus-allowed-path';
@@ -217,6 +219,7 @@ function AppShell() {
             <ProtectedRoute>
               <>
                 <Header />
+                <Breadcrumb />
                 <Dashboard />
                 <Footer />
               </>
@@ -229,6 +232,7 @@ function AppShell() {
             <ProtectedRoute>
               <>
                 <Header />
+                <Breadcrumb />
                 <FundTransactionsPage />
                 <Footer />
               </>
@@ -241,6 +245,7 @@ function AppShell() {
             <ProtectedRoute>
               <>
                 <Header />
+                <Breadcrumb />
                 <MyFundsPage />
                 <Footer />
               </>
@@ -253,6 +258,7 @@ function AppShell() {
             <ProtectedRoute>
               <>
                 <Header />
+                <Breadcrumb />
                 <MyJourneyPage />
                 <Footer />
               </>
@@ -265,10 +271,20 @@ function AppShell() {
             <AdminRoute>
               <>
                 <Header />
+                <Breadcrumb />
                 <AdminPage />
                 <Footer />
               </>
             </AdminRoute>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <AccessErrorPage
+              title="Page Not Found"
+              message="This page does not exist or cannot be opened directly."
+            />
           }
         />
         <Route
