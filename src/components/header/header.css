@@ -1,6 +1,6 @@
 .header {
   background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-  padding: 18px 24px 22px;
+  padding: 18px 24px 8px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -104,7 +104,7 @@
 
 @media (max-width: 640px) {
   .header {
-    padding: 14px 12px 16px;
+    padding: 14px 12px 8px;
   }
 
   .header-content {

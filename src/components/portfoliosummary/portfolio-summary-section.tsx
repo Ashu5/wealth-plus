@@ -198,7 +198,7 @@ function PortfolioSummarySection({
               dense
               noDataComponent="No portfolio entries found for the selected filters."
               customStyles={customStyles}
-              onRowClicked={(row) => navigate('/fund-transactions', { state: { selectedFund: row } })}
+              onRowClicked={(row) => navigate('/fund-transactions', { state: { selectedFund: row, fromApp: true } })}
               pointerOnHover
             />
           ) : (
