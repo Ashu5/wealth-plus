@@ -145,9 +145,9 @@ function AdminRoute({ children }: { children: ReactElement }) {
 
       try {
         const response = await searchUsers(userEmail);
-        const isAdminFlag:Boolean=response?.data[0]?.admin;
+        const isAdminFlag: boolean = Boolean(response?.data?.[0]?.admin);
         const role = response?.data[0]?.role;
-        const hasAdminAccess:any = isAdminFlag || role === 'admin';
+        const hasAdminAccess = isAdminFlag || role === 'admin';
 
         setIsAdmin(hasAdminAccess);
       } catch (error) {
@@ -174,15 +174,6 @@ function AdminRoute({ children }: { children: ReactElement }) {
     );
   }
 
-  if (!isAdmin) {
-    return (
-      <AccessErrorPage
-        title="Access Denied"
-        message="You do not have permission to view this page."
-      />
-    );
-  }
-
   if (!hasRouteAccess) {
     return (
       <AccessErrorPage
@@ -192,17 +183,21 @@ function AdminRoute({ children }: { children: ReactElement }) {
     );
   }
 
+  if (!isAdmin) {
+    return (
+      <AccessErrorPage
+        title="Access Denied"
+        message="You do not have permission to view this page."
+      />
+    );
+  }
+
   return children;
 }
 
 function AppShell() {
-  const location = useLocation();
-  const isDashboard = location.pathname === '/dashboard';
-
   return (
     <>
-      {isDashboard}
-
       <Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<Navigate to="/home" replace />} />
@@ -269,19 +264,6 @@ function AppShell() {
               </>
             </ProtectedRoute>
           }
-          />
-        <Route
-          path="/contact"
-          element={
-            <ProtectedRoute>
-              <>
-                <Header />
-                <Breadcrumb />
-                <ContactPage />
-                <Footer />
-              </>
-            </ProtectedRoute>
-          }
         />
         <Route
           path="/admin"
@@ -294,7 +276,15 @@ function AppShell() {
                 <Footer />
               </>
             </AdminRoute>
-
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <AccessErrorPage
+              title="Page Not Found"
+              message="This page does not exist or cannot be opened directly."
+            />
           }
         />
         <Route
