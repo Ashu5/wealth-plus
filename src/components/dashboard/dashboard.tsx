@@ -5,6 +5,7 @@ import FixedDepositsSummarySection from '../deposit/deposit-summary-section';
 import InvestmentSummarySection from '../investmentsummary/investment-summary-section';
 import MonthlySummary from './monthly-summary';
 import OverallSummary from './overall-summary';
+import TrendsSection from './trends-section';
 import type { FixedDepositEntry, ModalConfig, PortfolioEntry, StepDefinition } from './types';
 import { addFixedDeposit, getUserFixedDeposits } from '../../services/fund-service';
 import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
@@ -478,6 +479,11 @@ const handleSubmit = async (e: FormEvent) => {
 
       <div className="dashboard-grid">
         <div>
+          <TrendsSection
+            portfolioEntries={filteredPortfolioEntries}
+            fixedDepositEntries={filteredFixedDeposits}
+          />
+
           <MonthlySummary
             mutualFundContribution={monthlyMutualContribution}
             fixedDepositContribution={monthlyFixedContribution}

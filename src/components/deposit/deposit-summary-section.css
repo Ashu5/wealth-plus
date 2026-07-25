@@ -17,52 +17,98 @@
   padding-top: 12px;
 }
 
-.fd-empty-state {
+.fd-header-shell {
+  margin-bottom: 12px;
+}
+
+.fd-center-action {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 16px;
+}
+
+.fd-action-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(240px, 100%);
+  padding: 11px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  color: #334155;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.fd-action-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.12);
+  color: #4f46e5;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.fd-empty-state,
+.fd-error-state {
   display: grid;
   place-items: center;
   min-height: 260px;
-  padding: 32px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px dashed #cbd5e1;
-  border-radius: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f5f7ff 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
   text-align: center;
 }
 
-.fd-empty-state-content {
-  max-width: 420px;
+.fd-empty-state-content,
+.fd-state-card {
+  max-width: 460px;
 }
 
-.fd-empty-state .eyebrow {
-  color: #0f172a;
+.fd-empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+  font-size: 24px;
   margin-bottom: 12px;
+}
+
+.fd-empty-state .eyebrow,
+.fd-error-state .eyebrow {
+  color: #0f172a;
+  margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.75rem;
 }
 
-.fd-empty-state h3 {
-  font-size: 1.4rem;
-  margin-bottom: 12px;
+.fd-empty-state h3,
+.fd-error-state h3 {
+  font-size: 1.25rem;
+  margin-bottom: 10px;
   color: #0f172a;
 }
 
-.fd-empty-state p {
-  color: #475569;
-  margin-bottom: 20px;
+.fd-empty-state p,
+.fd-error-state p {
+  color: #334155;
+  margin-bottom: 10px;
   line-height: 1.6;
 }
 
-.add-fd-btn {
-  padding: 12px 24px;
-  background-color: #2563eb;
-  color: #ffffff;
-  border: none;
-  border-radius: 999px;
+.fd-empty-hint {
+  font-size: 0.95rem;
+  color: #4f46e5;
   font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.add-fd-btn:hover {
-  background-color: #1d4ed8;
 }

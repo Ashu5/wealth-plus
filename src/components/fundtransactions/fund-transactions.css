@@ -62,7 +62,7 @@
 .filter-control label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: #111827;
 }
 
 .filter-control select {
@@ -71,13 +71,14 @@
   padding: 10px 12px;
   font-size: 0.95rem;
   background: #fff;
+  color: #0f172a;
 }
 
 .loader-state,
 .empty-state {
   padding: 24px;
   text-align: center;
-  color: #64748b;
+  color: #334155;
   font-weight: 600;
 }
 

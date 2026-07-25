@@ -6,6 +6,8 @@ import Header from './components/header/header';
 import Footer from './components/footer/footer';
 import ResetPasswordPage from './components/reset-password/reset-password';
 import FundTransactionsPage from './components/fundtransactions/fund-transactions';
+import MyFundsPage from './components/fundmaster/my-funds-page';
+import MyJourneyPage from './components/myjourney/my-journey-page';
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('wealth-plus-auth') === 'true';
@@ -73,6 +75,30 @@ function AppShell() {
               <>
                 <Header />
                 <FundTransactionsPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-funds"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <MyFundsPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-journey"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <MyJourneyPage />
                 <Footer />
               </>
             </ProtectedRoute>
