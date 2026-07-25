@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
             if (response.status === 200) {
                 setTimeout(() => navigate("/login"), 2000);
             }
-        } catch (err) {
+        } catch {
             setStatus("error");
             setMessage("Link is expired. Please try again.");
         }
