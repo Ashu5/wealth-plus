@@ -781,6 +781,10 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .right-column {
+    max-width: 100%;
+  }
+
   .summary-stats {
     grid-template-columns: 1fr;
   }
@@ -805,6 +809,19 @@ th {
   .summary-header h2,
   .table-header h2 {
     font-size: 20px;
+  }
+
+  .overall-summary-grid,
+  .monthly-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overall-summary-card .summary-item .stat-label {
+    font-size: 11px;
+  }
+
+  .overall-summary-card .summary-item strong {
+    font-size: 14px;
   }
 
   .flow-node {

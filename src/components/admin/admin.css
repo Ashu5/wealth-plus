@@ -188,11 +188,13 @@
 
 .table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 860px;
 }
 
 .admin-table th,
@@ -318,5 +320,15 @@
   .admin-hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .select-box {
+    flex: 1 1 auto;
   }
 }

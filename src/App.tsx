@@ -10,6 +10,7 @@ import MyFundsPage from './components/fundmaster/my-funds-page';
 import MyJourneyPage from './components/myjourney/my-journey-page';
 import AdminPage from './components/admin/admin-page';
 import Breadcrumb from './components/breadcrumb/breadcrumb';
+import ContactPage from './components/contact/contact-page';
 import { searchUsers } from './services/admin-service';
 
 const INTERNAL_ROUTE_ACCESS_KEY = 'wealth-plus-allowed-path';
@@ -269,6 +270,19 @@ function AppShell() {
             </ProtectedRoute>
           }
           />
+        <Route
+          path="/contact"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <Breadcrumb />
+                <ContactPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/admin"
           element={

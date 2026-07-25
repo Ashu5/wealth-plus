@@ -82,6 +82,15 @@
   font-weight: 600;
 }
 
+.fund-transactions-card .rdt_TableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fund-transactions-card .rdt_Table {
+  min-width: 720px;
+}
+
 @media (max-width: 768px) {
   .fund-transactions-page {
     padding: 16px;
@@ -93,5 +102,20 @@
 
   .fund-transactions-header {
     flex-direction: column;
+  }
+
+  .back-link-btn {
+    width: 100%;
+  }
+
+  .filter-bar {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-control {
+    min-width: 0;
+    width: 100%;
   }
 }

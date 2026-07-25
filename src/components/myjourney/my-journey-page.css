@@ -268,4 +268,17 @@
     width: 100%;
     min-width: 0;
   }
+
+  .journey-goal-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .journey-update-row {
+    flex-direction: column;
+  }
+
+  .journey-update-row button {
+    width: 100%;
+  }
 }
