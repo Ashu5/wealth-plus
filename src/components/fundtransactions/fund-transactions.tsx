@@ -175,7 +175,7 @@ function FundTransactionsPage() {
             <p className="eyebrow">Portfolio</p>
             <h2>{selectedFund?.name ? `${selectedFund.name} Transactions` : 'Fund Transactions'}</h2>
           </div>
-          <button type="button" className="back-link-btn" onClick={() => navigate('/dashboard')}>
+          <button type="button" className="back-link-btn" onClick={() => navigate('/dashboard', { state: { fromApp: true } })}>
             Back to Dashboard
           </button>
         </div>
