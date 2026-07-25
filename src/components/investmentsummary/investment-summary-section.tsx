@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 type StepDefinition = {
   id: string;
   title: string;
@@ -52,74 +54,6 @@ const defaultSteps: StepDefinition[] = [
   },
 ];
 
-function FlowStepCard({
-  step,
-  index,
-  onAdd,
-  onAllocate,
-  onTrack,
-  onGrow,
-  onFundMaster,
-  onAddFD,
-}: {
-  step: StepDefinition;
-  index: number;
-  onAdd: (stepId: string) => void;
-  onAllocate?: () => void;
-  onTrack?: () => void;
-  onGrow?: () => void;
-  onFundMaster?: () => void;
-  onAddFD?: () => void;
-}) {
-  const handleClick = () => {
-    if (step.id === 'allocate') {
-      onAllocate?.();
-      return;
-    }
-
-    if (step.id === 'track') {
-      onTrack?.();
-      return;
-    }
-
-    if (step.id === 'grow') {
-      onGrow?.();
-      return;
-    }
-
-    if (step.id === 'fundMaster') {
-      onFundMaster?.();
-      return;
-    }
-
-    if (step.id === 'fixedDeposit') {
-      onAddFD?.();
-      return;
-    }
-
-    onAdd(step.id);
-  };
-
-  return (
-    <div className="flow-step">
-      <div className="flow-node">
-        <div className="flow-icon">{index + 1}</div>
-        <div className="flow-content">
-          <h3>{step.title}</h3>
-          <p>{step.subtitle}</p>
-          <span>{step.detail}</span>
-        </div>
-      </div>
-
-      <button type="button" className="flow-action" onClick={handleClick}>
-        {step.actionLabel}
-      </button>
-
-      {/* {index < defaultSteps.length - 1 && <div className="flow-arrow">→</div>} */}
-    </div>
-  );
-}
-
 function InvestmentSummarySection({
   monthlyTotal,
   portfolioValue,
@@ -133,45 +67,92 @@ function InvestmentSummarySection({
   onAddFD,
   steps = defaultSteps,
 }: InvestmentSummarySectionProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleStepClick = (stepId: string) => {
+    if (stepId === 'allocate') {
+      onAllocate?.();
+      return;
+    }
+
+    if (stepId === 'track') {
+      onTrack?.();
+      return;
+    }
+
+    if (stepId === 'grow') {
+      onGrow?.();
+      return;
+    }
+
+    if (stepId === 'fundMaster') {
+      onFundMaster?.();
+      return;
+    }
+
+    if (stepId === 'fixedDeposit') {
+      onAddFD?.();
+      return;
+    }
+
+    onAdd(stepId);
+  };
+
   return (
     <section className="summary-card">
-      <div className="summary-header">
+      <div className="summary-header summary-header-compact">
         <div>
           <p className="eyebrow">Investment Summary</p>
           <h2>Monthly Overview</h2>
         </div>
-        <span className="pill">Tracked Monthly</span>
+        <div className="summary-menu">
+          <button
+            type="button"
+            className="hamburger-button"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label="Open step actions"
+            aria-expanded={isMenuOpen}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          {isMenuOpen && (
+            <div className="action-menu" role="menu">
+              {steps.map((step, index) => (
+                <button
+                  key={step.id}
+                  type="button"
+                  className="action-menu-item"
+                  onClick={() => {
+                    handleStepClick(step.id);
+                    setIsMenuOpen(false);
+                  }}
+                  role="menuitem"
+                >
+                  <span className="menu-index">{index + 1}</span>
+                  <span>{step.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="summary-stats">
-        <div>
+        <div className="stat-card stat-card-primary">
           <span className="stat-label">Monthly Contribution</span>
           <strong>₹{monthlyTotal.toLocaleString()}</strong>
         </div>
-        <div>
+        <div className="stat-card stat-card-secondary">
           <span className="stat-label">Portfolio Value</span>
           <strong>₹{portfolioValue.toLocaleString()}</strong>
         </div>
-        <div>
+        <div className="stat-card stat-card-accent">
           <span className="stat-label">FD Value</span>
           <strong>₹{fixedDepositValue.toLocaleString()}</strong>
         </div>
-      </div>
-
-      <div className="flowchart">
-        {steps.map((step, index) => (
-          <FlowStepCard
-            key={step.id}
-            step={step}
-            index={index}
-            onAdd={onAdd}
-            onAllocate={onAllocate}
-            onTrack={onTrack}
-            onGrow={onGrow}
-            onFundMaster={onFundMaster}
-            onAddFD={onAddFD}
-          />
-        ))}
       </div>
 
       <div className="summary-footer">

@@ -113,15 +113,14 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
   };
 
   const formatSelectedDate = (date: Date | null) => {
-    if (!date) {
-      return new Date().toISOString().split('T')[0];
-    }
+    const selectedDate = date ?? new Date();
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const hours = String(selectedDate.getHours()).padStart(2, '0');
+    const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -171,12 +170,16 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
 
         <form onSubmit={handleSubmit}>
           <div className="field-group">
-            <label htmlFor="investmentDate">Select Date</label>
+            <label htmlFor="investmentDate">Select Date & Time</label>
             <DatePicker
               id="investmentDate"
               selected={selectedDate}
               onChange={(date: Date | null) => setSelectedDate(date)}
-              dateFormat="dd/MM/yyyy"
+              dateFormat="dd/MM/yyyy HH:mm"
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              timeCaption="Time"
               className="date-picker-input"
               popperPlacement="bottom-start"
             />

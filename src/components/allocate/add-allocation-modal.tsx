@@ -45,12 +45,16 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
 
         <form onSubmit={handleSubmit}>
           <div className="field-group">
-            <label htmlFor="investmentDate">Select Date</label>
+            <label htmlFor="investmentDate">Select Date & Time</label>
             <DatePicker
               id="investmentDate"
               selected={selectedDate}
               onChange={(date: Date | null) => setSelectedDate(date)}
-              dateFormat="dd/MM/yyyy"
+              dateFormat="dd/MM/yyyy HH:mm"
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              timeCaption="Time"
               className="date-picker-input"
               popperPlacement="bottom-start"
             />

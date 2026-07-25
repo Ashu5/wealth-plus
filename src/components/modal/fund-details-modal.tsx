@@ -10,9 +10,14 @@ type FundDetailsModalProps = {
   onClose: () => void;
 };
 
+type FundTransactionRow = PortfolioEntry & {
+  transactionDate?: string;
+  displayDate?: string;
+};
+
 function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDetailsModalProps) {
   const [modalMonthFilter, setModalMonthFilter] = useState('All');
-  const [transactionData, setTransactionData] = useState<PortfolioEntry[]>([]);
+  const [transactionData, setTransactionData] = useState<FundTransactionRow[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
 
   useEffect(() => {
@@ -26,22 +31,36 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
           localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
           'ashu01';
 
-        const transactions = await fetchUserFundTransactions(userName, selectedFund.name);
-        
-        // Transform API response to PortfolioEntry format
-        const transformed: PortfolioEntry[] = transactions.map((transaction) => ({
-          id: `${transaction.folioNumber}-${transaction.transactionDate}`,
-          month: transaction.transactionDate.substring(0, 7), // Convert to YYYY-MM format
-          investmentType: transaction.fundType || 'Mutual Fund',
-          bank: '',
-          name: transaction.fundName,
-          amount: transaction.amount,
-          currentValue: transaction.amount, // Using amount as current value for now
-          status: 'Active',
-          folioNumber: transaction.folioNumber,
-          nav: transaction.nav,
-          units: transaction.units,
-        }));
+        const payload = await fetchUserFundTransactions(userName, selectedFund.name);
+        const sourceData = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+
+        const transformed: FundTransactionRow[] = sourceData.map((transaction: any) => {
+          const transactionDate = typeof transaction?.transactionDate === 'string' ? transaction.transactionDate : '';
+          const parsedDate = transactionDate ? new Date(transactionDate) : null;
+          const displayDate = parsedDate && !Number.isNaN(parsedDate.getTime())
+            ? parsedDate.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+            : transactionDate;
+
+          return {
+            id: `${transaction?.folioNumber || selectedFund.folioNumber || 'txn'}-${transactionDate || Date.now()}`,
+            month: transactionDate ? transactionDate.substring(0, 7) : '',
+            investmentType: transaction?.fundType || 'Mutual Fund',
+            bank: '',
+            name: transaction?.fundName || selectedFund.name,
+            amount: Number(transaction?.amount || 0),
+            currentValue: Number(transaction?.amount || 0),
+            status: 'Active',
+            folioNumber: transaction?.folioNumber || '',
+            nav: Number(transaction?.nav || 0),
+            units: Number(transaction?.units || 0),
+            transactionDate,
+            displayDate,
+          };
+        });
 
         setTransactionData(transformed);
       } catch (error) {
@@ -59,7 +78,6 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
     return null;
   }
 
-  // Use API data if available, otherwise fall back to allEntries
   const dataSource = transactionData.length > 0 ? transactionData : (allEntries || entries);
 
   const getModalMonthOptions = () => {
@@ -70,26 +88,37 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
 
   const getFilteredModalEntries = () => {
     return dataSource.filter((e) => {
-      const nameMatch = e.name === selectedFund.name;
+      const isApiData = transactionData.length > 0;
+      const nameMatch = isApiData ? true : e.name === selectedFund.name;
       const monthMatch = modalMonthFilter === 'All' || e.month === modalMonthFilter;
       return nameMatch && monthMatch;
     });
   };
 
-  const columns: TableColumn<PortfolioEntry>[] = [
+  const columns: TableColumn<FundTransactionRow>[] = [
     {
       name: 'Date',
-      selector: (row) => row.month,
+      selector: (row) => (row as FundTransactionRow).displayDate || row.month,
       sortable: true,
       grow: 1,
+      wrap: true,
+      minWidth: '150px',
+      style: {
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
+      },
     },
     {
       name: 'TranID',
       selector: (row) => row.id,
       sortable: true,
       grow: 1,
+      wrap: true,
+      minWidth: '150px',
       style: {
         fontSize: '0.875rem',
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
       },
     },
     {
@@ -97,11 +126,12 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
       selector: (row) => row.name,
       sortable: true,
       grow: 2,
+      wrap: true,
+      minWidth: '220px',
       style: {
         whiteSpace: 'normal',
         wordBreak: 'break-word',
         overflowWrap: 'anywhere',
-        minWidth: '150px',
       },
     },
     {
@@ -112,12 +142,24 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
       },
       sortable: true,
       grow: 1,
+      wrap: true,
+      minWidth: '120px',
+      style: {
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
+      },
     },
     {
       name: 'Fund Type',
       selector: (row) => row.investmentType,
       sortable: true,
       grow: 1,
+      wrap: true,
+      minWidth: '140px',
+      style: {
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
+      },
     },
     {
       name: 'Amount',
@@ -125,6 +167,12 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
       sortable: true,
       sortFunction: (a, b) => a.amount - b.amount,
       grow: 1,
+      wrap: true,
+      minWidth: '120px',
+      style: {
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
+      },
     },
     {
       name: 'NAV',
@@ -132,6 +180,12 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
       sortable: true,
       sortFunction: (a, b) => (a.nav || 0) - (b.nav || 0),
       grow: 1,
+      wrap: true,
+      minWidth: '120px',
+      style: {
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
+      },
     },
     {
       name: 'Units',
@@ -139,6 +193,12 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
       sortable: true,
       sortFunction: (a, b) => (a.units || 0) - (b.units || 0),
       grow: 1,
+      wrap: true,
+      minWidth: '110px',
+      style: {
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
+      },
     },
   ];
 
@@ -149,11 +209,14 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
         color: '#0f172a',
         fontWeight: 600,
         padding: '12px 16px',
+        whiteSpace: 'nowrap',
       },
     },
     cells: {
       style: {
         padding: '10px 16px',
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere' as const,
       },
     },
     pagination: {
@@ -194,18 +257,18 @@ function FundDetailsModal({ selectedFund, entries, allEntries, onClose }: FundDe
           </div>
         </div>
 
-        <div className="modal-table-wrapper">
+        <div className="modal-table-wrapper" style={{ overflowX: 'auto', width: '100%' }}>
           {isLoadingTransactions ? (
             <p style={{ padding: '16px', color: '#64748b' }}>Loading transactions...</p>
           ) : (
             <DataTable
               columns={columns}
+              responsive
               data={getFilteredModalEntries()}
               pagination
               paginationPerPage={6}
               paginationRowsPerPageOptions={[6, 10, 15]}
               fixedHeader
-              fixedHeaderScrollHeight="320px"
               dense
               noDataComponent="No transactions found for this fund."
               customStyles={customStyles}

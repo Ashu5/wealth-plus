@@ -54,12 +54,16 @@ function AddFDModal({
 
         <form onSubmit={onSubmit}>
           <div className="field-group">
-            <label htmlFor="fdOpenDate">FD Open Date</label>
+            <label htmlFor="fdOpenDate">FD Open Date & Time</label>
             <DatePicker
               id="fdOpenDate"
               selected={selectedDate}
               onChange={onDateChange}
-              dateFormat="dd/MM/yyyy"
+              dateFormat="dd/MM/yyyy HH:mm"
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              timeCaption="Time"
               className="date-picker-input"
               popperPlacement="bottom-start"
             />
@@ -202,12 +206,16 @@ function AddFDModal({
 
           {formData.investmentType === 'Fixed Deposit' && (
             <div className="field-group">
-              <label htmlFor="maturityDate">Maturity Date</label>
+              <label htmlFor="maturityDate">Maturity Date & Time</label>
               <DatePicker
                 id="maturityDate"
                 selected={selectedMaturityDate}
                 onChange={onMaturityDateChange}
-                dateFormat="dd/MM/yyyy"
+                dateFormat="dd/MM/yyyy HH:mm"
+                showTimeSelect
+                timeFormat="HH:mm"
+                timeIntervals={15}
+                timeCaption="Time"
                 className="date-picker-input"
                 popperPlacement="bottom-start"
                 required

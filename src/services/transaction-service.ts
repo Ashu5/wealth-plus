@@ -14,11 +14,17 @@ export interface FundTransaction {
   userName: string | null;
 }
 
+export interface FundTransactionResponse {
+  data: FundTransaction[];
+  status: number;
+  message:string
+}
+
 export const fetchUserFundTransactions = async (userName: string, fundName: string) => {
   const url = `${API_BASE_URL}/transactions/userFundTransactions`;
   
   try {
-    const response = await axios.post<FundTransaction[]>(url, {
+    const response = await axios.post<FundTransactionResponse>(url, {
       userName,
       fundName,
     });

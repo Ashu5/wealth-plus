@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DataTable, { type TableColumn } from 'react-data-table-component';
 import type { PortfolioEntry } from '../dashboard/types';
-import FundDetailsModal from '../modal/fund-details-modal';
 import './portfolio-summary-section.css';
 
 type PortfolioSummarySectionProps = {
@@ -45,14 +45,13 @@ function FilterBar({
 
 function PortfolioSummarySection({
   entries,
-  allEntries,
   fundTypeFilter,
   setFundTypeFilter,
   fundTypeOptions,
   isLoading = false,
   error = null,
 }: PortfolioSummarySectionProps) {
-  const [selectedFund, setSelectedFund] = useState<PortfolioEntry | null>(null);
+  const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(true);
 
   const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
@@ -72,12 +71,6 @@ function PortfolioSummarySection({
   };
 
   const columns: TableColumn<PortfolioEntry>[] = [
-    {
-      name: 'Month',
-      selector: (row) => row.month,
-      sortable: true,
-      grow: 1,
-    },
     {
       name: 'Fund Name',
       selector: (row) => row.name,
@@ -183,13 +176,6 @@ function PortfolioSummarySection({
         secondaryLabel="Fund Type"
       />
 
-      <FundDetailsModal
-        selectedFund={selectedFund}
-        entries={entries}
-        allEntries={allEntries}
-        onClose={() => setSelectedFund(null)}
-      />
-
       {isLoading ? (
         <div className="table-wrapper">
           <p style={{ padding: '16px 0', color: '#64748b' }}>Loading portfolio summary…</p>
@@ -212,7 +198,7 @@ function PortfolioSummarySection({
               dense
               noDataComponent="No portfolio entries found for the selected filters."
               customStyles={customStyles}
-              onRowClicked={(row) => setSelectedFund(row)}
+              onRowClicked={(row) => navigate('/fund-transactions', { state: { selectedFund: row, fromApp: true } })}
               pointerOnHover
             />
           ) : (

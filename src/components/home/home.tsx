@@ -167,7 +167,7 @@ export default function Homepage() {
     if (statusCode === 200 && !alreadyLoggedIn) {
       persistAuthenticatedUser(emailValue, userPayload, sessionIdFromPayload);
       setPendingSessionId(null);
-      navigate("/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true, state: { fromApp: true } });
       return true;
     }
     if(statusCode === 500) {  
@@ -345,7 +345,7 @@ export default function Homepage() {
         fullName: storedFullName,
       });
 
-      navigate("/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true, state: { fromApp: true } });
     } catch (error) {
       console.error("Unable to complete Google sign-in:", error);
       setOauthError("Unable to sign in with Google right now.");
