@@ -5,6 +5,10 @@ on:
     branches:
       - "main"
       - "dev"
+    paths-ignore:
+      - "README.md"
+      - ".github/workflows/build-on-commit.yml"
+      - "src/services/auth-token.ts"
 
 permissions:
   checks: write
@@ -13,10 +17,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
+        ref: ${{ github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22.12.0
