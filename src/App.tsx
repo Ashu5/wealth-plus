@@ -42,10 +42,10 @@ function AccessErrorPage({ title, message }: AccessErrorPageProps) {
 
           <button
             type="button"
-            onClick={() => navigate('/dashboard', { state: { fromApp: true } })}
+            onClick={() => navigate('/login', { state: { fromApp: true } })}
             style={{ border: 'none', borderRadius: '999px', padding: '10px 16px', fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg, #b91c1c 0%, #dc2626 100%)', color: '#ffffff' }}
           >
-            Back to Dashboard
+            Back to Home
           </button>
         </section>
       </main>
