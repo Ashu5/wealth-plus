@@ -6,9 +6,10 @@ on:
   push:
     branches:
       - "main"
+      - "dev"
   workflow_dispatch:    
   inputs:
-  target_branch:
+   target_branch:
     description: 'Target branch to deploy'
     required: true
     default: 'main'
