@@ -4,7 +4,8 @@ import { Lock, Mail, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import "./home.css";
 import logo from "../../assets/logo_big.png";
 import UserRegistration from "../register/user-registration";
-import { assignUsername, googleLogin, login, profileDetails, registerUser, trackLogoutActivity } from "../../services/user-service";
+import { assignUsername, googleLogin, login, profileDetails, registerUser, ssoLogin, trackLogoutActivity } from "../../services/user-service";
+import { getAuthToken, setAuthToken } from "../../services/auth-token";
 
 function GoogleMark() {
   return (
@@ -54,6 +55,74 @@ export default function Homepage() {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isForgotPasswordSubmitting, setIsForgotPasswordSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
+
+  const extractTokenValue = (value: unknown, allowRaw = false): string | null => {
+    if (typeof value !== "string") {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (/^bearer\s+/i.test(trimmed)) {
+      const token = trimmed.replace(/^bearer\s+/i, "").trim();
+      return token || null;
+    }
+
+    return allowRaw ? trimmed : null;
+  };
+
+  const extractTokenFromPayload = (payload: unknown, depth = 0): string | null => {
+    if (depth > 6 || !payload) {
+      return null;
+    }
+
+    if (Array.isArray(payload)) {
+      for (const item of payload) {
+        const token = extractTokenFromPayload(item, depth + 1);
+        if (token) {
+          return token;
+        }
+      }
+      return null;
+    }
+
+    if (typeof payload !== "object") {
+      return null;
+    }
+
+    const record = payload as Record<string, unknown>;
+    const tokenKeys = ["token", "jwtToken", "accessToken", "authToken", "authorization", "Authorization"];
+
+    for (const key of tokenKeys) {
+      if (record[key] !== undefined) {
+        const token = extractTokenValue(record[key], true);
+        if (token) {
+          return token;
+        }
+      }
+    }
+
+    if (record.data !== undefined) {
+      const nestedToken = extractTokenFromPayload(record.data, depth + 1);
+      if (nestedToken) {
+        return nestedToken;
+      }
+    }
+
+    return null;
+  };
+
+  const extractAuthTokenFromResponse = (response: unknown): string | null => {
+    if (!response || typeof response !== "object") {
+      return null;
+    }
+
+    const responseRecord = response as Record<string, unknown>;
+    return extractTokenFromPayload(responseRecord.data);
+  };
 
   const resolveUsernameFromPayload = (payload: unknown): string => {
     if (typeof payload === "string") {
@@ -165,6 +234,13 @@ export default function Homepage() {
 
 
     if (statusCode === 200 && !alreadyLoggedIn) {
+      const authToken = extractAuthTokenFromResponse(response);
+      if (!authToken) {
+        setSignInError("Login succeeded but no authorization token was returned. Please try again.");
+        return false;
+      }
+
+      setAuthToken(authToken);
       persistAuthenticatedUser(emailValue, userPayload, sessionIdFromPayload);
       setPendingSessionId(null);
       navigate("/dashboard", { replace: true, state: { fromApp: true } });
@@ -251,10 +327,12 @@ export default function Homepage() {
       setIsForgotPasswordSubmitting(true);
       setForgotPasswordError(null);
       setForgotPasswordMessage(null);
+      const authToken = getAuthToken();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/wealth-plus/api"}/update/forgotPassword`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify({ email: emailValue }),
       });
@@ -279,13 +357,27 @@ export default function Homepage() {
       setOauthError(null);
 
       const result = await googleLogin();
+      const ssoResponse = await ssoLogin(result.token);
       const user = result.user;
       const email = user?.email?.trim();
       const fullName = user?.displayName?.trim() || "User";
+      const firebaseAuthToken = extractTokenValue(result.token, true);
 
       if (!email) {
         throw new Error("Google did not return an email address.");
       }
+
+      if (!firebaseAuthToken) {
+        throw new Error("Google sign-in did not return an authorization token.");
+      }
+
+      const authTokenFromSsoResponse = extractAuthTokenFromResponse(ssoResponse);
+      if (!authTokenFromSsoResponse) {
+        throw new Error("SSO login succeeded but no JWT token was returned.");
+      }
+
+      // Firebase token is used for /auth/sso-login validation; use backend JWT afterwards.
+      setAuthToken(authTokenFromSsoResponse);
 
       let storedUserName = user?.displayName?.trim() || email.split("@")[0];
       let storedFullName = fullName;
