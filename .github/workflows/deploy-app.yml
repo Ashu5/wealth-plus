@@ -9,9 +9,9 @@ on:
 
     paths-ignore:
       - "README.md"
-      - ".github/workflows/build-on-commit.yml"
+      - ".github/workflows/deploy-app.yml"
       - "src/services/auth-token.ts"
-        
+
   workflow_dispatch:    
     inputs:
       target_branch:
