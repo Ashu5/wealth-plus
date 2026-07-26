@@ -5,11 +5,12 @@ on:
     branches:
       - "main"
       - "dev"
-    workflow_dispatch:
 
-  permissions:
-    checks: write
-    contents: read
+  workflow_dispatch:
+  
+permissions:
+checks: write
+contents: read
 
 jobs:
   build:
