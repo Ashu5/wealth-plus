@@ -158,21 +158,25 @@ export const profileDetails = async (userEmail: string) => {
 export const googleLogin = async () => {
   const result = await signInWithPopup(auth, provider);
   const user = result.user;
-  const token = await user.getIdToken();
+  const token = await user.getIdToken(true);
 
+  return { user, token };
+};
+
+export const ssoLogin = async (firebaseToken: string) => {
   const response = await axios.post(
     `${API_BASE_URL}/auth/sso-login`,
     {},
     {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${firebaseToken}`,
         'Content-Type': 'application/json',
       },
       withCredentials: true,
     }
   );
 
-  return { user, token, response };
+  return response;
 };
 
 export const resetPassword = async (token: string, newPassword: string) => {
