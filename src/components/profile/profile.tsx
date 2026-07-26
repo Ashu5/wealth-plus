@@ -1,23 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ProfileDetails from './profile-details';
 import './profile.css';
 import { profileDetails, trackLogoutActivity } from '../../services/user-service';
+import { clearAuthToken } from '../../services/auth-token';
 
 function ProfileComponent() {
   const navigate = useNavigate();
-  const [userName, setUserName] = useState('Guest');
+  const [userName] = useState(() => localStorage.getItem('wealth-plus-username') || 'Guest');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showProfileDetails, setShowProfileDetails] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('wealth-plus-username');
-    if (storedUser) {
-      setUserName(storedUser);
-    }
-
     const loadAdminAccess = async () => {
       const storedEmail = localStorage.getItem('wealth-plus-email')?.trim();
       if (!storedEmail) {
@@ -86,6 +80,7 @@ function ProfileComponent() {
     localStorage.removeItem('wealth-plus-full-name');
     localStorage.removeItem('wealth-plus-last-login');
     localStorage.removeItem('wealth-plus-password');
+    clearAuthToken();
     setMenuOpen(false);
     navigate('/home');
   };
@@ -110,8 +105,8 @@ function ProfileComponent() {
               className="profile-menu-item"
               role="menuitem"
               onClick={() => {
-                setShowProfileDetails(true);
                 setMenuOpen(false);
+                navigate('/profile', { state: { fromApp: true } });
               }}
             >
               My Profile
@@ -142,10 +137,6 @@ function ProfileComponent() {
           </div>
         )}
       </div>
-
-      {showProfileDetails && (
-        <ProfileDetails onClose={() => setShowProfileDetails(false)} />
-      )}
     </>
   );
 }

@@ -1,11 +1,15 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './profile-details.css';
-import { profileDetails } from '../../services/user-service';
+import { profileDetails as fetchProfileDetails } from '../../services/user-service';
+
 type ProfileDetailsProps = {
-  onClose: () => void;
+  onClose?: () => void;
 };
 
 function ProfileDetails({ onClose }: ProfileDetailsProps) {
+  const navigate = useNavigate();
+  const isOverlay = Boolean(onClose);
   const [name, setName] = useState('Guest');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -17,10 +21,10 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
 
-  const setCookie = (name: string, value: string, days: number = 30) => {
+  const setCookie = (cookieName: string, value: string, days: number = 30) => {
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    const cookieString = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    const cookieString = `${cookieName}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
     document.cookie = cookieString;
   };
 
@@ -41,10 +45,9 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
       }
 
       try {
-        const response = await profileDetails(storedEmail);
-
-        const profileData = response?.data || response?.data || {};
-        const firstName = profileData?.firstName  || '';
+        const response = await fetchProfileDetails(storedEmail);
+        const profileData = response?.data ?? response ?? {};
+        const firstName = profileData?.firstName || '';
         const lastName = profileData?.lastName || '';
         const resolvedFullName = [firstName, lastName].filter(Boolean).join(' ').trim();
         const profileUsername = profileData?.userName || '';
@@ -76,7 +79,7 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
       }
     };
 
-    loadProfile();
+    void loadProfile();
   }, []);
 
   const handlePasswordChange = (e: FormEvent) => {
@@ -106,86 +109,118 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
     setConfirmPassword('');
   };
 
-  return (
-    <div className="profile-details-overlay" onClick={onClose}>
-      <div className="profile-details-card" onClick={(e) => e.stopPropagation()}>
-        <div className="profile-details-header">
-          <div>
-            <h3>Profile Details</h3>
-            <p>Manage your account information</p>
-          </div>
+  const handleBackToDashboard = () => {
+    navigate('/dashboard', { state: { fromApp: true } });
+  };
+
+  const profileCard = (
+    <div
+      className={isOverlay ? 'profile-details-card' : 'profile-details-card profile-details-card--page'}
+      onClick={isOverlay ? (e) => e.stopPropagation() : undefined}
+    >
+      <div className="profile-details-header">
+        <div>
+          <h3>Profile Details</h3>
+          <p>Manage your account information</p>
+        </div>
+        {isOverlay ? (
           <button type="button" className="profile-details-close" onClick={onClose}>
             ×
           </button>
+        ) : (
+          <button type="button" className="profile-details-secondary-action" onClick={handleBackToDashboard}>
+            Back to Dashboard
+          </button>
+        )}
+      </div>
+
+      <div className="profile-details-body">
+        <div className="profile-detail-row">
+          <span className="profile-detail-label">Username</span>
+          <span className="profile-detail-value">{username || 'Not available'}</span>
         </div>
 
-        <div className="profile-details-body">
-          <div className="profile-detail-row">
-            <span className="profile-detail-label">Username</span>
-            <span className="profile-detail-value">{username || 'Not available'}</span>
-          </div>
+        <div className="profile-detail-row">
+          <span className="profile-detail-label">Name</span>
+          <span className="profile-detail-value">{name}</span>
+        </div>
 
-          <div className="profile-detail-row">
-            <span className="profile-detail-label">Name</span>
-            <span className="profile-detail-value">{name}</span>
-          </div>
+        <div className="profile-detail-row">
+          <span className="profile-detail-label">Last Login Date</span>
+          <span className="profile-detail-value">{lastLogin}</span>
+        </div>
 
-          <div className="profile-detail-row">
-            <span className="profile-detail-label">Last Login Date</span>
-            <span className="profile-detail-value">{lastLogin}</span>
-          </div>
+        <div className="profile-detail-row">
+          <span className="profile-detail-label">Email</span>
+          <span className="profile-detail-value">{email}</span>
+        </div>
 
-          <div className="profile-detail-row">
-            <span className="profile-detail-label">Email</span>
-            <span className="profile-detail-value">{email}</span>
-          </div>
+        <div className="profile-detail-row">
+          <span className="profile-detail-label">Full Name</span>
+          <span className="profile-detail-value">{fullName}</span>
+        </div>
 
-          <div className="profile-detail-row">
-            <span className="profile-detail-label">Full Name</span>
-            <span className="profile-detail-value">{fullName}</span>
-          </div>
+        <div className="profile-detail-actions">
+          <button
+            type="button"
+            className="profile-change-password-btn"
+            onClick={() => setShowPasswordForm((prev) => !prev)}
+          >
+            {showPasswordForm ? 'Hide Password Form' : 'Change Password'}
+          </button>
+        </div>
 
-          <div className="profile-detail-actions">
-            <button
-              type="button"
-              className="profile-change-password-btn"
-              onClick={() => setShowPasswordForm((prev) => !prev)}
-            >
-              {showPasswordForm ? 'Hide Password Form' : 'Change Password'}
+        {showPasswordForm && (
+          <form className="password-form" onSubmit={handlePasswordChange}>
+            <input
+              type="password"
+              placeholder="Current Password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Confirm New Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+
+            {message ? <p className="password-message">{message}</p> : null}
+
+            <button type="submit" className="profile-save-btn">
+              Update Password
             </button>
-          </div>
-
-          {showPasswordForm && (
-            <form className="password-form" onSubmit={handlePasswordChange}>
-              <input
-                type="password"
-                placeholder="Current Password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-              <input
-                type="password"
-                placeholder="New Password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-
-              {message ? <p className="password-message">{message}</p> : null}
-
-              <button type="submit" className="profile-save-btn">
-                Update Password
-              </button>
-            </form>
-          )}
-        </div>
+          </form>
+        )}
       </div>
     </div>
+  );
+
+  if (isOverlay) {
+    return (
+      <div className="profile-details-overlay" onClick={onClose}>
+        {profileCard}
+      </div>
+    );
+  }
+
+  return (
+    <main className="profile-details-page">
+      <section className="profile-details-page-hero">
+        <p className="profile-details-kicker">Account overview</p>
+        <h1>Profile Details</h1>
+        <p>
+          Review your account information, last login data, and password settings from a dedicated profile page.
+        </p>
+      </section>
+      {profileCard}
+    </main>
   );
 }
 
