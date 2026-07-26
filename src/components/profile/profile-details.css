@@ -9,6 +9,46 @@
   padding: 16px;
 }
 
+.profile-details-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-details-page-hero {
+  border-radius: 20px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  border: 1px solid #dbe4f0;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+}
+
+.profile-details-page-hero h1 {
+  margin: 8px 0;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: #0f172a;
+}
+
+.profile-details-page-hero p {
+  margin: 0;
+  max-width: 720px;
+  color: #334155;
+  line-height: 1.65;
+}
+
+.profile-details-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
 .profile-details-card {
   width: 100%;
   max-width: 500px;
@@ -16,6 +56,12 @@
   border-radius: 16px;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
   overflow: hidden;
+}
+
+.profile-details-card--page {
+  max-width: none;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
 .profile-details-header {
@@ -43,6 +89,16 @@
   font-size: 1.4rem;
   cursor: pointer;
   color: #334155;
+}
+
+.profile-details-secondary-action {
+  border: none;
+  background: #e2e8f0;
+  color: #0f172a;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .profile-details-body {
@@ -91,6 +147,11 @@
 .profile-save-btn {
   background: #2563eb;
   color: #fff;
+}
+
+.profile-details-card--page .profile-details-body {
+  padding-top: 22px;
+  padding-bottom: 24px;
 }
 
 .password-form {

@@ -11,7 +11,9 @@ import MyJourneyPage from './components/myjourney/my-journey-page';
 import AdminPage from './components/admin/admin-page';
 import Breadcrumb from './components/breadcrumb/breadcrumb';
 import ContactPage from './components/contact/contact-page';
+import ProfileDetails from './components/profile/profile-details';
 import { searchUsers } from './services/admin-service';
+import { clearAuthToken } from './services/auth-token';
 
 const INTERNAL_ROUTE_ACCESS_KEY = 'wealth-plus-allowed-path';
 
@@ -72,6 +74,7 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
       localStorage.removeItem('wealth-plus-full-name');
       localStorage.removeItem('wealth-plus-last-login');
       localStorage.removeItem('wealth-plus-password');
+      clearAuthToken();
       return;
     }
 
@@ -124,6 +127,7 @@ function AdminRoute({ children }: { children: ReactElement }) {
         localStorage.removeItem('wealth-plus-full-name');
         localStorage.removeItem('wealth-plus-last-login');
         localStorage.removeItem('wealth-plus-password');
+        clearAuthToken();
         setLoading(false);
         return;
       }
@@ -286,6 +290,19 @@ function AppShell() {
                 <Header />
                 <Breadcrumb />
                 <ContactPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <Breadcrumb />
+                <ProfileDetails />
                 <Footer />
               </>
             </ProtectedRoute>
