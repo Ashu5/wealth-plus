@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import './dashboard.css';
-import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
 import FixedDepositsSummarySection from '../deposit/deposit-summary-section';
-import InvestmentSummarySection from '../investmentsummary/investment-summary-section';
 import MonthlySummary from './monthly-summary';
 import OverallSummary from './overall-summary';
 import TrendsSection from './trends-section';
-import type { FixedDepositEntry, ModalConfig, PortfolioEntry, StepDefinition } from './types';
+import type { FixedDepositEntry, ModalConfig, PortfolioEntry } from './types';
 import { addFixedDeposit, getUserFixedDeposits } from '../../services/fund-service';
 import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
-import AddAllocationModal from '../allocate/add-allocation-modal';
-import AddTrackingModal from '../track/add-tracking-modal';
-import AddGrowthModal from '../grow/add-growth-modal';
-import AddFundMasterModal from '../fundmaster/add-fund-master-modal';
+import AddAllocationModal from '../modal/add-allocation-modal';
+import AddTrackingModal from '../modal/add-tracking-modal';
+import AddGrowthModal from '../modal/add-growth-modal';
+import AddFundMasterModal from '../modal/add-fund-master-modal';
 import AddFDModal from '../modal/add-fd-modal';
+import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
+import RecentTransaction from '../recenttransaction/recent-transaction';
 
 const formatMonth = (value: string) => {
   const parsedDate = new Date(value);
@@ -69,44 +69,6 @@ const buildPortfolioSummaryEntries = (payload: PortfolioSummaryApiResponse): Por
     };
   }).flat();
 };
-
-const stepDefinitions: StepDefinition[] = [
-  {
-    id: 'fundMaster',
-    title: 'Fund Master',
-    subtitle: 'Set Funds',
-    detail: 'Add a new fund, set your target, and define your investment strategy.',
-    actionLabel: 'Fund Master',
-  },
-  {
-    id: 'allocate',
-    title: 'Allocate',
-    subtitle: 'Distribute capital',
-    detail: 'Balance equities, bonds, and cash for better stability.',
-    actionLabel: 'Add Allocation',
-  },
-  {
-    id: 'track',
-    title: 'Track',
-    subtitle: 'Monitor growth',
-    detail: 'Review performance regularly and rebalance if needed.',
-    actionLabel: 'Add Tracking',
-  },
-  {
-    id: 'grow',
-    title: 'Grow',
-    subtitle: 'Compound wealth',
-    detail: 'Increase contributions over time.',
-    actionLabel: 'Add Growth',
-  },
-  {
-    id: 'fixedDeposit',
-    title: 'Fixed Deposit',
-    subtitle: 'Save FD',
-    detail: 'Add fixed deposit details and track maturity, interest, and returns.',
-    actionLabel: 'Add Fixed Deposit',
-  },
-];
 
 const monthlyModalConfig: ModalConfig = {
   id: 'add-fund',
@@ -177,6 +139,13 @@ function Dashboard() {
   const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>([]);
   const [fixedDepositEntries, setFixedDepositEntries] = useState<FixedDepositEntry[]>([]);
   const [portfolioSummaryEntries, setPortfolioSummaryEntries] = useState<PortfolioEntry[]>([]);
+  const [portfolioSummaryStats, setPortfolioSummaryStats] = useState({
+    totalAmountInvested: 0,
+    totalCurrentValue: 0,
+    totalGainLossAmount: 0,
+    totalGainLossPercentage: 0,
+    overallStatus: 'Neutral',
+  });
   const [portfolioSummaryLoading, setPortfolioSummaryLoading] = useState(true);
   const [portfolioSummaryError, setPortfolioSummaryError] = useState<string | null>(null);
   const [fixedDepositLoading, setFixedDepositLoading] = useState(true);
@@ -192,7 +161,6 @@ function Dashboard() {
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [selectedMaturityDate, setSelectedMaturityDate] = useState<Date | null>(new Date(new Date().setFullYear(new Date().getFullYear() + 1)));
-  const [recentEntries, setRecentEntries] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showAllocationModal, setShowAllocationModal] = useState(false);
@@ -223,6 +191,13 @@ function Dashboard() {
       const entries = buildPortfolioSummaryEntries(payload);
       setPortfolioSummaryEntries(entries);
       setPortfolioEntries(entries);
+      setPortfolioSummaryStats({
+        totalAmountInvested: Number(payload?.totalAmountInvested ?? 0),
+        totalCurrentValue: Number(payload?.totalCurrentValue ?? 0),
+        totalGainLossAmount: Number(payload?.totalGainLossAmount ?? 0),
+        totalGainLossPercentage: Number(payload?.totalGainLossPercentage ?? 0),
+        overallStatus: typeof payload?.overallStatus === 'string' && payload.overallStatus.trim() ? payload.overallStatus : 'Neutral',
+      });
     } catch (error) {
       console.error('Error loading portfolio summary:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -321,16 +296,11 @@ function Dashboard() {
 
   const monthlyMutualContribution = filteredPortfolioEntries.reduce((sum, item) => sum + item.amount, 0);
   const monthlyFixedContribution = filteredFixedDeposits.reduce((sum, item) => sum + item.amount, 0);
-  const monthlyTotal = monthlyMutualContribution + monthlyFixedContribution;
 
   const totalInvestment = portfolioEntries.reduce((sum, item) => sum + item.amount, 0) + fixedDepositEntries.reduce((sum, item) => sum + item.amount, 0);
   const totalCurrentValue = portfolioEntries.reduce((sum, item) => sum + item.currentValue, 0) + fixedDepositEntries.reduce((sum, item) => sum + item.amount, 0);
   const totalGainLoss = totalCurrentValue - totalInvestment;
   const totalGainLossPercentage = totalInvestment > 0 ? (totalGainLoss / totalInvestment) * 100 : 0;
-
-  const portfolioValue = filteredPortfolioEntries.reduce((sum, item) => sum + item.currentValue, 0);
-  const fixedDepositValue = filteredFixedDeposits.reduce((sum, item) => sum + item.amount, 0);
-  const portfolioGain = portfolioValue - filteredPortfolioEntries.reduce((sum, item) => sum + item.amount, 0);
 
   const openModal = (defaultInvestmentType = 'Bonds/Others') => {
     setActiveModal(monthlyModalConfig);
@@ -361,9 +331,7 @@ function Dashboard() {
   };
 
   
-const closeModal = () => {
-  setActiveModal(null);
-  setModalError(null);
+const resetAddFdForm = () => {
   setFormData({
     investmentType: 'Bonds/Others',
     bank: 'ICICI Bank',
@@ -371,6 +339,12 @@ const closeModal = () => {
   });
   setSelectedDate(new Date());
   setSelectedMaturityDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1)));
+};
+
+const closeModal = () => {
+  setActiveModal(null);
+  setModalError(null);
+  resetAddFdForm();
 };
 
 const showSuccessMessage = () => {
@@ -442,10 +416,7 @@ const handleSubmit = async (e: FormEvent) => {
     };
 
     setFixedDepositEntries((prev) => [entry, ...prev]);
-    setRecentEntries((prev) => [
-      `FD added: ${entry.bank} - ₹${entry.amount.toLocaleString()}`,
-      ...prev,
-    ].slice(0, 4));
+    resetAddFdForm();
     closeModal();
   } catch (error) {
     console.error('Failed to add fixed deposit:', error);
@@ -490,19 +461,22 @@ const handleSubmit = async (e: FormEvent) => {
             periodLabel="Monthly Contribution"
           />
 
-          <InvestmentSummarySection
-            monthlyTotal={monthlyTotal}
-            portfolioValue={portfolioValue}
-            fixedDepositValue={fixedDepositValue}
-            portfolioGain={portfolioGain}
-            recentEntries={recentEntries}
-            onAdd={openModal}
-            steps={stepDefinitions}
-            onAllocate={openAllocationModal}
-            onTrack={openTrackingModal}
-            onGrow={openGrowthModal}
-            onFundMaster={openFundMasterModal}
-            onAddFD={() => openModal('Fixed Deposit')}
+          <RecentTransaction
+            entries={filteredPortfolioSummaryEntries}
+            isLoading={portfolioSummaryLoading}
+            error={portfolioSummaryError}
+            totalAmountInvested={portfolioSummaryStats.totalAmountInvested}
+            totalCurrentValue={portfolioSummaryStats.totalCurrentValue}
+            totalGainLossAmount={portfolioSummaryStats.totalGainLossAmount}
+            totalGainLossPercentage={portfolioSummaryStats.totalGainLossPercentage}
+            overallStatus={portfolioSummaryStats.overallStatus}
+            actions={[
+              { id: 'fundMaster', label: 'Fund Master', onClick: openFundMasterModal },
+              { id: 'allocate', label: 'Add Allocation', onClick: openAllocationModal },
+              { id: 'track', label: 'Add Tracking', onClick: openTrackingModal },
+              { id: 'grow', label: 'Add Growth', onClick: openGrowthModal },
+              { id: 'fixedDeposit', label: 'Add Fixed Deposit', onClick: () => openModal('Fixed Deposit') },
+            ]}
           />
         </div>
 
@@ -516,12 +490,13 @@ const handleSubmit = async (e: FormEvent) => {
 
           <PortfolioSummarySection
             entries={filteredPortfolioSummaryEntries}
-            allEntries={portfolioSummaryEntries}
             fundTypeFilter={fundTypeFilter}
             setFundTypeFilter={setFundTypeFilter}
             fundTypeOptions={fundTypeOptions}
             isLoading={portfolioSummaryLoading}
             error={portfolioSummaryError}
+            title="Portfolio Summary"
+            eyebrow="Portfolio Details"
           />
 
           <FixedDepositsSummarySection

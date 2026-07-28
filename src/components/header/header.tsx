@@ -45,14 +45,14 @@ function Header() {
 
             {menuOpen && (
               <div className="header-menu" role="menu">
-                <button type="button" className="header-menu-item" onClick={() => handleNavigate('/my-funds')}>
+                <button type="button" role="menuitem" className="header-menu-item" onClick={() => handleNavigate('/my-funds')}>
                   My Fund
                 </button>
-                <button type="button" className="header-menu-item" onClick={() => handleNavigate('/my-journey')}>
+                <button type="button" role="menuitem" className="header-menu-item" onClick={() => handleNavigate('/my-journey')}>
                   My Journey
                 </button>
-                <button type="button" className="header-menu-item" onClick={() => handleNavigate('/dashboard')}>
-                  My Insights
+                <button type="button" role="menuitem" className="header-menu-item" onClick={() => handleNavigate('/my-reports')}>
+                  My Reports
                 </button>
               </div>
             )}

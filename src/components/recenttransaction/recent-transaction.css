@@ -1,0 +1,189 @@
+.recent-transactions-card {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  position: relative;
+  box-sizing: border-box;
+  margin-top: 16px;
+  padding: 20px 20px 18px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.recent-transactions-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 12;
+}
+
+.recent-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0 14px;
+}
+
+.recent-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f5f7ff 100%);
+  border: 1px solid #e2e8f0;
+  min-height: 80px;
+  justify-content: center;
+}
+
+.recent-summary-item .stat-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.recent-summary-item strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.recent-summary-item strong.gain {
+  color: #16a34a;
+}
+
+.recent-summary-item strong.loss {
+  color: #dc2626;
+}
+
+.recent-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  margin: 14px 0 10px;
+}
+
+.recent-filter-control {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.recent-filter-control label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.recent-filter-control select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #0f172a;
+}
+
+.recent-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
+}
+
+.recent-transactions-card .summary-menu {
+  position: relative;
+  z-index: 20;
+}
+
+.recent-transactions-card .action-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 170px;
+  width: max-content;
+  max-width: min(220px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  z-index: 30;
+  box-sizing: border-box;
+}
+
+.recent-transactions-card .action-menu-item {
+  border: none;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.recent-table-wrapper .rdt_Table {
+  min-width: 760px;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.recent-table-wrapper .rdt_TableHead {
+  background-color: #f8fafc;
+}
+
+.recent-table-wrapper .rdt_Pagination {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+}
+
+.recent-table-wrapper .rdt_TableBody {
+  width: 100%;
+}
+
+.recent-table-wrapper .rdt_TableCell,
+.recent-table-wrapper .rdt_TableCol {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .recent-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .recent-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recent-transactions-header {
+    align-items: flex-start;
+  }
+}
