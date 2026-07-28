@@ -26,7 +26,7 @@ type YearlyFixedDepositRow = {
 const getStoredUser = () =>
   localStorage.getItem('wealth-plus-username')?.trim() ||
   localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
-  'ashu01';
+  '';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-IN', {
