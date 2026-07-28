@@ -51,8 +51,8 @@ function Header() {
                 <button type="button" className="header-menu-item" onClick={() => handleNavigate('/my-journey')}>
                   My Journey
                 </button>
-                <button type="button" className="header-menu-item" onClick={() => handleNavigate('/dashboard')}>
-                  My Insights
+                <button type="button" className="header-menu-item" onClick={() => handleNavigate('/my-reports')}>
+                  My Reports
                 </button>
               </div>
             )}
