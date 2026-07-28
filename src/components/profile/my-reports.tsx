@@ -282,7 +282,32 @@ function MyReportsPage() {
         </div>
       </section>
 
-      {loading && <p className="insights-status">Loading your insights…</p>}
+      {loading && (
+        <section className="insights-loading-state" aria-live="polite">
+          <div className="insights-loader-card">
+            <div className="insights-spinner" aria-hidden="true" />
+            <div>
+              <h2>Preparing your reports</h2>
+              <p>Fetching your portfolio and fixed deposit data…</p>
+            </div>
+          </div>
+
+          <div className="insights-metrics-grid">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={`skeleton-metric-${index}`} className="insights-metric-card insights-skeleton-card">
+                <div className="insights-skeleton-line insights-skeleton-line-short" />
+                <div className="insights-skeleton-line insights-skeleton-line-long" />
+              </div>
+            ))}
+          </div>
+
+          <div className="insights-breakdown-card insights-skeleton-table-card">
+            <div className="insights-skeleton-line insights-skeleton-line-short" />
+            <div className="insights-skeleton-line insights-skeleton-line-medium" />
+            <div className="insights-skeleton-line insights-skeleton-line-medium" />
+          </div>
+        </section>
+      )}
       {!loading && error && <p className="insights-status insights-status-error">{error}</p>}
 
       {!loading && !error && (
