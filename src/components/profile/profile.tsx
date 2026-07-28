@@ -64,25 +64,45 @@ function ProfileComponent() {
   };
 
   const handleLogout = async () => {
-    const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || localStorage.getItem('wealth-plus-username')?.trim() || 'unknown_user';
-    const sessionId = sessionStorage.getItem('wealth-plus-session-id') || '';
+    const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || '';
+    const sessionId = sessionStorage.getItem('wealth-plus-session-id')?.trim() || '';
 
-    if (!sessionId) {
-      console.warn('Missing session ID for logout activity. Sending logout event with empty session ID.');
+    try {
+      if (userEmail && sessionId) {
+        await trackLogoutActivity(userEmail, sessionId);
+      } else {
+        console.warn('Skipping logout activity request due to missing email or session ID.', {
+          hasEmail: Boolean(userEmail),
+          hasSessionId: Boolean(sessionId),
+        });
+      }
+    } catch (error) {
+      const statusCode =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { status?: unknown } }).response?.status === 'number'
+          ? (error as { response?: { status?: number } }).response?.status
+          : undefined;
+
+      if (statusCode === 401) {
+        console.warn('Logout activity request returned 401. Clearing local session anyway.');
+      } else {
+        console.error('Error tracking logout activity:', error);
+      }
+    } finally {
+      sessionStorage.removeItem('wealth-plus-session-id');
+
+      localStorage.removeItem('wealth-plus-auth');
+      localStorage.removeItem('wealth-plus-username');
+      localStorage.removeItem('wealth-plus-email');
+      localStorage.removeItem('wealth-plus-full-name');
+      localStorage.removeItem('wealth-plus-last-login');
+      localStorage.removeItem('wealth-plus-password');
+      clearAuthToken();
+      setMenuOpen(false);
+      navigate('/home', { replace: true });
     }
-
-    await trackLogoutActivity(userEmail, sessionId);
-    sessionStorage.removeItem('wealth-plus-session-id');
-
-    localStorage.removeItem('wealth-plus-auth');
-    localStorage.removeItem('wealth-plus-username');
-    localStorage.removeItem('wealth-plus-email');
-    localStorage.removeItem('wealth-plus-full-name');
-    localStorage.removeItem('wealth-plus-last-login');
-    localStorage.removeItem('wealth-plus-password');
-    clearAuthToken();
-    setMenuOpen(false);
-    navigate('/home');
   };
 
   return (
