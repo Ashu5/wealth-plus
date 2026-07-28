@@ -2,12 +2,22 @@ import axios from 'axios';
 import type { UserRegisterRequest } from '../models/user-register-request';
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
+import { getAuthToken } from './auth-token';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
 console.log('API base URL:', import.meta.env.VITE_API_BASE_URL);
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
+
+const getActivityHeaders = () => {
+  const authToken = getAuthToken();
+
+  return {
+    'Content-Type': 'application/json',
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  };
+};
 
 export const trackLoginActivity = async (userEmail: string): Promise<string | undefined> => {
   try {
@@ -18,9 +28,7 @@ export const trackLoginActivity = async (userEmail: string): Promise<string | un
         params: {
           userEmail
         },
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getActivityHeaders(),
         withCredentials: true,
       }
     );
@@ -42,9 +50,7 @@ export const trackLogoutActivity = async (userEmail: string, sessionId: string) 
         sessionId,
       },
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getActivityHeaders(),
         withCredentials: true,
       }
     );

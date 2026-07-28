@@ -19,6 +19,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
     currency: 'INR',
     platform: 'Groww',
     userName: storedUser || '',
+    userEmail: localStorage.getItem('wealth-plus-email')?.trim() || '',
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,6 +141,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
         platformDescription: `${fundMasterData.platform} Platform`,
       },
       userName: fundMasterData.userName,
+      userEmail: fundMasterData.userEmail,
     };
 
     try {
