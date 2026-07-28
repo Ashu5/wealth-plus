@@ -12,6 +12,7 @@ const labelMap: Record<string, string> = {
   'my-journey': 'My Journey',
   'fund-transactions': 'Fund Transactions',
   profile: 'Profile',
+  'my-reports': 'My Reports',
   contact: 'Contact',
   admin: 'Admin',
 };
