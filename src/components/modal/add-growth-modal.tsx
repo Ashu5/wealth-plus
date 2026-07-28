@@ -2,16 +2,16 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-type AddAllocationModalProps = {
+type AddGrowthModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
-  const [allocationData, setAllocationData] = useState({
-    allocationName: '',
-    amount: '',
-    category: 'Equity',
+function AddGrowthModal({ isOpen, onClose }: AddGrowthModalProps) {
+  const [growthData, setGrowthData] = useState({
+    growthName: '',
+    growthRate: '',
+    horizon: '5 Years',
     folioNumber: '',
     currentType: 'INR',
     platformType: 'Groww',
@@ -24,12 +24,12 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setAllocationData((prev) => ({ ...prev, [name]: value }));
+    setGrowthData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    console.log('Allocation submitted:', allocationData);
+    console.log('Growth submitted:', growthData);
     onClose();
   };
 
@@ -37,7 +37,12 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Add Allocation</h3>
+          <div className="modal-header-title-group">
+            <button type="button" className="modal-back" onClick={onClose} aria-label="Go back">
+              ←
+            </button>
+            <h3>Add Growth</h3>
+          </div>
           <button type="button" className="modal-close" onClick={onClose}>
             ×
           </button>
@@ -61,42 +66,37 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
           </div>
 
           <div className="field-group">
-            <label htmlFor="allocationName">Allocation Name</label>
+            <label htmlFor="growthName">Growth Name</label>
             <input
-              id="allocationName"
-              name="allocationName"
+              id="growthName"
+              name="growthName"
               type="text"
-              value={allocationData.allocationName}
+              value={growthData.growthName}
               onChange={handleChange}
-              placeholder="Allocation Name"
+              placeholder="Growth Name"
               required
             />
           </div>
 
           <div className="field-group">
-            <label htmlFor="amount">Amount</label>
+            <label htmlFor="growthRate">Growth Rate (%)</label>
             <input
-              id="amount"
-              name="amount"
+              id="growthRate"
+              name="growthRate"
               type="number"
-              value={allocationData.amount}
+              value={growthData.growthRate}
               onChange={handleChange}
-              placeholder="5000"
+              placeholder="12"
               required
             />
           </div>
 
           <div className="field-group">
-            <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              name="category"
-              value={allocationData.category}
-              onChange={handleChange}
-            >
-              <option value="Equity">Equity</option>
-              <option value="Debt">Debt</option>
-              <option value="Hybrid">Hybrid</option>
+            <label htmlFor="horizon">Horizon</label>
+            <select id="horizon" name="horizon" value={growthData.horizon} onChange={handleChange}>
+              <option value="3 Years">3 Years</option>
+              <option value="5 Years">5 Years</option>
+              <option value="10 Years">10 Years</option>
             </select>
           </div>
 
@@ -106,7 +106,7 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
               id="folioNumber"
               name="folioNumber"
               type="text"
-              value={allocationData.folioNumber}
+              value={growthData.folioNumber}
               onChange={handleChange}
               placeholder="123456789"
             />
@@ -114,12 +114,7 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
 
           <div className="field-group">
             <label htmlFor="currentType">Currency</label>
-            <select
-              id="currentType"
-              name="currentType"
-              value={allocationData.currentType}
-              onChange={handleChange}
-            >
+            <select id="currentType" name="currentType" value={growthData.currentType} onChange={handleChange}>
               <option value="INR">INR</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -128,12 +123,7 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
 
           <div className="field-group">
             <label htmlFor="platformType">Platform Type</label>
-            <select
-              id="platformType"
-              name="platformType"
-              value={allocationData.platformType}
-              onChange={handleChange}
-            >
+            <select id="platformType" name="platformType" value={growthData.platformType} onChange={handleChange}>
               <option value="Groww">Groww</option>
               <option value="Coin">Coin</option>
               <option value="Smallcase">Smallcase</option>
@@ -145,7 +135,7 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
               Cancel
             </button>
             <button type="submit" className="save-btn">
-              Save Allocation
+              Save Growth
             </button>
           </div>
         </form>
@@ -154,4 +144,4 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
   );
 }
 
-export default AddAllocationModal;
+export default AddGrowthModal;

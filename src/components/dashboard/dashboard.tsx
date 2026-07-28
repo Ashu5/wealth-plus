@@ -7,10 +7,10 @@ import TrendsSection from './trends-section';
 import type { FixedDepositEntry, ModalConfig, PortfolioEntry } from './types';
 import { addFixedDeposit, getUserFixedDeposits } from '../../services/fund-service';
 import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
-import AddAllocationModal from '../allocate/add-allocation-modal';
-import AddTrackingModal from '../track/add-tracking-modal';
-import AddGrowthModal from '../grow/add-growth-modal';
-import AddFundMasterModal from '../fundmaster/add-fund-master-modal';
+import AddAllocationModal from '../modal/add-allocation-modal';
+import AddTrackingModal from '../modal/add-tracking-modal';
+import AddGrowthModal from '../modal/add-growth-modal';
+import AddFundMasterModal from '../modal/add-fund-master-modal';
 import AddFDModal from '../modal/add-fd-modal';
 import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
 import RecentTransaction from '../recenttransaction/recent-transaction';
@@ -331,9 +331,7 @@ function Dashboard() {
   };
 
   
-const closeModal = () => {
-  setActiveModal(null);
-  setModalError(null);
+const resetAddFdForm = () => {
   setFormData({
     investmentType: 'Bonds/Others',
     bank: 'ICICI Bank',
@@ -341,6 +339,12 @@ const closeModal = () => {
   });
   setSelectedDate(new Date());
   setSelectedMaturityDate(new Date(new Date().setFullYear(new Date().getFullYear() + 1)));
+};
+
+const closeModal = () => {
+  setActiveModal(null);
+  setModalError(null);
+  resetAddFdForm();
 };
 
 const showSuccessMessage = () => {
@@ -412,6 +416,7 @@ const handleSubmit = async (e: FormEvent) => {
     };
 
     setFixedDepositEntries((prev) => [entry, ...prev]);
+    resetAddFdForm();
     closeModal();
   } catch (error) {
     console.error('Failed to add fixed deposit:', error);

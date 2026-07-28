@@ -229,8 +229,13 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Add Tracking</h3>
-          <button type="button" className="modal-close" onClick={onClose}>
+          <div className="modal-header-title-group">
+            <button type="button" className="modal-back" onClick={handleCancel} aria-label="Go back">
+              ←
+            </button>
+            <h3>Add Tracking</h3>
+          </div>
+          <button type="button" className="modal-close" onClick={handleCancel}>
             ×
           </button>
         </div>
@@ -301,6 +306,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
               value={trackingData.fundType}
               placeholder="--"
               readOnly
+              disabled
             />
           </div>
 

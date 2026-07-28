@@ -29,7 +29,6 @@ function RecentTransaction({
   actions = []
 }: RecentTransactionProps) {
   const navigate = useNavigate();
-  const [isVisible, setIsVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const hasPortfolioEntries = entries.length > 0;
 
