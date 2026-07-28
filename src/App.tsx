@@ -12,7 +12,7 @@ import AdminPage from './components/admin/admin-page';
 import Breadcrumb from './components/breadcrumb/breadcrumb';
 import ContactPage from './components/contact/contact-page';
 import ProfileDetails from './components/profile/profile-details';
-import MyReportsPage from './components/profile/my-insights-page';
+import MyReportsPage from './components/profile/my-reports';
 import { searchUsers } from './services/admin-service';
 import { clearAuthToken } from './services/auth-token';
 

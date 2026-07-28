@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './my-insights-page.css';
+import './my-reports.css';
 import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
 import { getUserFixedDeposits } from '../../services/fund-service';
 
