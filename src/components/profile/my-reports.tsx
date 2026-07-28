@@ -148,9 +148,9 @@ function MyReportsPage() {
         setInvestmentRows(buildInvestmentRows(portfolioPayload));
         setFixedDepositRows(buildFixedDepositRows(fixedDeposits));
       } catch (loadError) {
-        console.error('Error loading insights data:', loadError);
+        console.error('Error loading reports data:', loadError);
         if (isMounted) {
-          setError('Unable to load your insights right now.');
+          setError('Unable to load your reports right now.');
           setInvestmentRows([]);
           setFixedDepositRows([]);
         }
