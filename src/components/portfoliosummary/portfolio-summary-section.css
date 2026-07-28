@@ -3,6 +3,11 @@
   max-width: 100%;
   overflow: hidden;
   box-sizing: border-box;
+  padding: 18px 18px 16px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .table-header {
@@ -11,76 +16,54 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  margin-bottom: 10px;
 }
 
-.filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  width: 100%;
-  margin: 16px 0;
+.portfolio-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0 12px;
 }
 
-.filter-control {
+.portfolio-summary-item {
   display: flex;
-  flex: 1 1 220px;
   flex-direction: column;
   gap: 6px;
-  min-width: 0;
-}
-
-.filter-control label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.filter-control select {
-  width: 100%;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background-color: #fff;
-  color: #0f172a;
-}
-
-.table-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.table-wrapper .rdt_Table {
-  min-width: 760px;
-  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f5f7ff 100%);
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: hidden;
+  min-height: 82px;
+  justify-content: center;
 }
 
-.table-wrapper .rdt_TableHead {
-  background-color: #f8fafc;
+.portfolio-summary-item .stat-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.table-wrapper .rdt_Pagination {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 12px;
+.portfolio-summary-item strong {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
 }
 
-.table-wrapper .rdt_TableBody {
-  width: 100%;
+.portfolio-summary-item strong.gain {
+  color: #16a34a;
 }
 
-.table-wrapper .rdt_TableCell,
-.table-wrapper .rdt_TableCol {
-  white-space: nowrap;
+.portfolio-summary-item strong.loss {
+  color: #dc2626;
 }
 
-.empty-state-banner {
+.summary-state-banner {
   margin-top: 8px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: 12px;
   background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 100%);
   border: 1px solid #fcd34d;
@@ -90,9 +73,29 @@
   text-align: center;
 }
 
+.summary-state-banner.error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.summary-state-banner p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .portfolio-summary-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
   .table-header {
     align-items: flex-start;
+  }
+
+  .portfolio-summary-metrics {
+    grid-template-columns: 1fr;
   }
 
   .pill {
@@ -106,19 +109,4 @@
   font-size: 12px;
   color: #64748b;
   font-weight: 500;
-}
-
-.modal-table-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.modal-table-wrapper .rdt_Table {
-  min-width: 760px;
-  width: 100%;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: hidden;
 }
