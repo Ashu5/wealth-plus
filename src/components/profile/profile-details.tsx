@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './profile-details.css';
 import { profileDetails as fetchProfileDetails } from '../../services/user-service';
+import MyInsights from './my-insights';
 
 type ProfileDetailsProps = {
   onClose?: () => void;
@@ -220,6 +221,7 @@ function ProfileDetails({ onClose }: ProfileDetailsProps) {
         </p>
       </section>
       {profileCard}
+      <MyInsights />
     </main>
   );
 }

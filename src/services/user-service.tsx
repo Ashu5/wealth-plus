@@ -160,6 +160,25 @@ export const profileDetails = async (userEmail: string) => {
   }
 };
 
+export const getYearSummary = async (financialYear: string) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/portfolio/yearSummary`,
+      {
+        params: { year: financialYear },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching year summary:', error);
+    throw error;
+  }
+};
 
 export const googleLogin = async () => {
   const result = await signInWithPopup(auth, provider);
