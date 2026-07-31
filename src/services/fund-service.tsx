@@ -64,6 +64,21 @@ export const generateFundCode = async (params: { fundName: string; fundType: str
     }
 };
 
+export const generateFundCodeV2 = async (params: { fundName: string}) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fund-master/generateFundCode/v2`, {
+            params,
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error("Error generating fund code:", error);
+        throw error;
+    }
+};
+
+
+
 
 export const addFixedDeposit = async (fixedDepositData: any) => {
     try {
