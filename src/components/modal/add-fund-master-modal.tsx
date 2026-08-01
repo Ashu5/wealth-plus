@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { addFund, generateFundCode } from '../../services/fund-service';
+import { addFund, generateFundCodeV2 } from '../../services/fund-service';
 
 type AddFundMasterModalProps = {
   isOpen: boolean;
@@ -35,14 +35,16 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
     let cancelled = false;
 
     const generateCode = async () => {
-      if (!fundName || !fundType || folioNumber.length < 3) {
+      const trimmedFundName = fundName.trim();
+
+      if (!trimmedFundName) {
         setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
         setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
         setCodeError('');
         return;
       }
 
-      if (generatedFor.fundName === fundName && generatedFor.fundType === fundType && generatedFor.folioPrefix === folioPrefix) {
+      if (generatedFor.fundName === trimmedFundName) {
         return;
       }
 
@@ -51,7 +53,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
       setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
 
       try {
-        const response = await generateFundCode({ fundName, fundType, folioNumber });
+        const response = await generateFundCodeV2({ fundName: trimmedFundName });
         if (cancelled) {
           return;
         }
@@ -74,7 +76,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
         }
 
         setFundMasterData((prev) => ({ ...prev, fundCode: generatedCode }));
-        setGeneratedFor({ fundName, fundType, folioPrefix });
+        setGeneratedFor({ fundName: trimmedFundName, fundType, folioPrefix });
       } catch {
         if (!cancelled) {
           setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
@@ -92,7 +94,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
     return () => {
       cancelled = true;
     };
-  }, [fundName, fundType, folioNumber]);
+  }, [fundName]);
 
   if (!isOpen) {
     return null;
@@ -100,7 +102,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    const shouldClearCode = name === 'fundName' || name === 'fundType' || (name === 'folioNumber' && value.length < 3);
+    const shouldClearCode = name === 'fundName';
 
     setFundMasterData((prev) => ({
       ...prev,
@@ -108,7 +110,7 @@ function AddFundMasterModal({ isOpen, onClose }: AddFundMasterModalProps) {
       ...(shouldClearCode ? { fundCode: '' } : {}),
     }));
 
-    if (name === 'fundName' || name === 'fundType' || (name === 'folioNumber' && value.length < 3)) {
+    if (name === 'fundName') {
       setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
     }
   };
