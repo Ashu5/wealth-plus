@@ -64,11 +64,18 @@ export const generateFundCode = async (params: { fundName: string; fundType: str
     }
 };
 
-export const generateFundCodeV2 = async (params: { fundName: string}) => {
+export const generateFundCodeV2 = async (fundName: string, fundType: string, folioNumber: string) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/fund-master/generateFundCode/v2`, {
-            params,
-        });
+        const response = await axios.post(
+            `${API_BASE_URL}/fund-master/generateFundCode/v2`,
+            { fundName, fundType, folioNumber },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                withCredentials: true,
+            }
+        );
 
         return response.data;
     } catch (error) {

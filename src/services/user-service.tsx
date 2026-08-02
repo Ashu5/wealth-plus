@@ -12,10 +12,16 @@ provider.setCustomParameters({ prompt: 'select_account' });
 
 const getActivityHeaders = () => {
   const authToken = getAuthToken();
+  const defaultAuthorization = axios.defaults.headers.common.Authorization;
+  const authorizationHeader = authToken
+    ? { Authorization: `Bearer ${authToken}` }
+    : typeof defaultAuthorization === 'string' && defaultAuthorization.trim()
+      ? { Authorization: defaultAuthorization }
+      : {};
 
   return {
     'Content-Type': 'application/json',
-    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    ...authorizationHeader,
   };
 };
 
@@ -47,11 +53,14 @@ export const trackLogoutActivity = async (userEmail: string, sessionId: string) 
       url,
       {
         userEmail,
-        sessionId,
+        sessionId
       },
       {
-        headers: getActivityHeaders(),
-        withCredentials: true,
+        // This endpoint identifies the session to close by sessionId, not the caller's token.
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: undefined,
+        },
       }
     );
 

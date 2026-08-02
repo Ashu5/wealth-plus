@@ -294,10 +294,10 @@ export default function Homepage() {
       setSignInError(null);
       setSuccessMessage(null);
       const response = await trackLogoutActivity(emailValue, pendingSessionId);
-      if (response?.status === 200) {
+      if (response?.status === 200 || response?.status === 204) {
         console.log("Successfully logged out other device:", response);
         setPendingSessionId(null);
-        setSuccessMessage("Logged out other device. Pls sign in now.");
+        setSuccessMessage("Logged out other device. Please sign in now.");
       } else {
         throw new Error("Logout did not return a successful status.");
       }
