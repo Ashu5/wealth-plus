@@ -132,18 +132,6 @@ function ProfileComponent() {
               My Profile
             </button>
 
-            <button
-              type="button"
-              className="profile-menu-item"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                navigate('/my-reports', { state: { fromApp: true } });
-              }}
-            >
-              My Reports
-            </button>
-
             {isAdmin && (
               <button
                 type="button"
