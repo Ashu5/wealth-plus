@@ -1,8 +1,7 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import '../fundmaster/my-funds-page.css';
-import { addFund, generateFundCodeV2 } from '../../services/fund-service';
+import MatchingFundsSuggestions from './matching-funds-suggestions';
+import { addFund, generateFundCodeV2, getMatchingFunds } from '../../services/fund-service';
 
 type AddFundMasterModalProps = {
   isOpen?: boolean;
@@ -12,7 +11,35 @@ type AddFundMasterModalProps = {
   onSuccess?: () => void;
 };
 
+type MatchingFundSuggestion = {
+  label: string;
+  schemeCode?: string;
+  fundName?: string;
+};
+
 const storedUser = localStorage.getItem('wealth-plus-username')?.trim() || localStorage.getItem('wealth-plus-email')?.trim();
+
+// Unwraps common API envelope shapes (arrays, Spring Page.content, or a single fund object) into a flat array.
+function extractSuggestionsArray(responseData: unknown): unknown[] {
+  if (Array.isArray(responseData)) {
+    return responseData;
+  }
+
+  if (responseData && typeof responseData === 'object') {
+    const candidate = responseData as Record<string, unknown>;
+    const wrapperKeys = ['funds', 'matchingFunds', 'data', 'content', 'items', 'results', 'fundNames'];
+
+    for (const key of wrapperKeys) {
+      if (Array.isArray(candidate[key])) {
+        return candidate[key] as unknown[];
+      }
+    }
+
+    return [responseData];
+  }
+
+  return responseData ? [responseData] : [];
+}
 
 function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'Fund Master', onSuccess }: AddFundMasterModalProps) {
   const [fundMasterData, setFundMasterData] = useState({
@@ -26,80 +53,185 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
     userName: storedUser || '',
     userEmail: localStorage.getItem('wealth-plus-email')?.trim() || '',
   });
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCodeLoading, setIsCodeLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [codeError, setCodeError] = useState('');
+  const [matchingFunds, setMatchingFunds] = useState<MatchingFundSuggestion[]>([]);
+  const [matchingFundsError, setMatchingFundsError] = useState('');
+  const [isMatchingFundsLoading, setIsMatchingFundsLoading] = useState(false);
   const [generatedFor, setGeneratedFor] = useState({ fundName: '', fundType: '', folioPrefix: '' });
+  const matchingFundsRequestIdRef = useRef(0);
 
   const { fundName, fundType, folioNumber } = fundMasterData;
-  const folioPrefix = folioNumber.slice(0, 3);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const generateCode = async () => {
-      const trimmedFundName = fundName.trim();
-
-      if (!trimmedFundName) {
-        setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
-        setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
-        setCodeError('');
-        return;
-      }
-
-      if (generatedFor.fundName === trimmedFundName) {
-        return;
-      }
-
-      setIsCodeLoading(true);
-      setCodeError('');
+  const generateFundCodeForCurrentInput = async (trimmedFundName = fundName.trim()) => {
+    if (!trimmedFundName) {
       setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
+      setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
+      setCodeError('');
+      return;
+    }
 
-      try {
-        const response = await generateFundCodeV2(trimmedFundName, fundType, folioPrefix);
-        if (cancelled) {
-          return;
-        }
+    const currentFolioPrefix = folioNumber.slice(0, 3);
 
-        const responseData = response && typeof response === 'object' && 'data' in response
-          ? (response as { data?: unknown }).data
-          : response;
+    if (
+      generatedFor.fundName === trimmedFundName
+      && generatedFor.fundType === fundType
+      && generatedFor.folioPrefix === currentFolioPrefix
+      && fundMasterData.fundCode
+    ) {
+      return;
+    }
 
-        const generatedCode = typeof responseData === 'string'
-          ? responseData
-          : responseData?.fundCode
-          || responseData?.code
-          || responseData?.result
-          || (typeof responseData?.data === 'string' ? responseData.data : '')
-          || '';
+    setIsCodeLoading(true);
+    setCodeError('');
+    setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
 
-        if (!generatedCode) {
-          console.warn('generateFundCode returned no fund code:', responseData);
-          setCodeError('No fund code returned from API.');
-        }
+    try {
+      const response = await generateFundCodeV2(trimmedFundName, fundType, currentFolioPrefix);
 
-        setFundMasterData((prev) => ({ ...prev, fundCode: generatedCode }));
-        setGeneratedFor({ fundName: trimmedFundName, fundType, folioPrefix });
-      } catch {
-        if (!cancelled) {
-          setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
-          setCodeError('Unable to generate fund code.');
-        }
-      } finally {
-        if (!cancelled) {
-          setIsCodeLoading(false);
-        }
+      const responseData = response && typeof response === 'object' && 'data' in response
+        ? (response as { data?: unknown }).data
+        : response;
+
+      const generatedCode = typeof responseData === 'string'
+        ? responseData
+        : responseData?.fundCode
+        || responseData?.code
+        || responseData?.result
+        || (typeof responseData?.data === 'string' ? responseData.data : '')
+        || '';
+
+      if (!generatedCode) {
+        console.warn('generateFundCode returned no fund code:', responseData);
+        setCodeError('No fund code returned from API.');
+      } else {
+        setCodeError('');
       }
-    };
 
-    generateCode();
+      setFundMasterData((prev) => ({ ...prev, fundCode: generatedCode }));
+      setGeneratedFor({ fundName: trimmedFundName, fundType, folioPrefix: currentFolioPrefix });
+    } catch {
+      setFundMasterData((prev) => ({ ...prev, fundCode: '' }));
+      setCodeError('Unable to generate fund code.');
+    } finally {
+      setIsCodeLoading(false);
+    }
+  };
 
-    return () => {
-      cancelled = true;
-    };
-  }, [fundName]);
+  const handleFundNameBlur = () => {
+    void lookupMatchingFunds(fundName.trim());
+    void generateFundCodeForCurrentInput();
+  };
+
+  const handleFundNameKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void lookupMatchingFunds(fundName.trim());
+    }
+  };
+
+  const handleMatchingFundsSelect = (selectedSuggestion: MatchingFundSuggestion) => {
+    const selectedCode = selectedSuggestion.schemeCode || '';
+
+    setFundMasterData((prev) => ({
+      ...prev,
+      fundName: selectedSuggestion.fundName || selectedSuggestion.label,
+      fundCode: selectedCode,
+    }));
+    setMatchingFunds([]);
+    setMatchingFundsError('');
+    setCodeError('');
+    setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
+  };
+
+  const lookupMatchingFunds = async (query: string) => {
+    const trimmedQuery = query.trim();
+
+    if (!trimmedQuery || trimmedQuery.length < 2) {
+      setMatchingFunds([]);
+      setMatchingFundsError('');
+      setIsMatchingFundsLoading(false);
+      return;
+    }
+
+    const requestId = matchingFundsRequestIdRef.current + 1;
+    matchingFundsRequestIdRef.current = requestId;
+    setIsMatchingFundsLoading(true);
+    setMatchingFundsError('');
+
+    try {
+      const response = await getMatchingFunds(trimmedQuery);
+      const responseData = response && typeof response === 'object' && 'data' in response
+        ? (response as { data?: unknown }).data
+        : response;
+
+      const suggestionsArray = extractSuggestionsArray(responseData);
+
+      const normalizedSuggestions = suggestionsArray
+        .map((item: unknown) => {
+          if (typeof item === 'string') {
+            return { label: item, schemeCode: undefined, fundName: item } satisfies MatchingFundSuggestion;
+          }
+
+          if (typeof item === 'object' && item !== null) {
+            const candidate = item as {
+              fundName?: unknown;
+              name?: unknown;
+              value?: unknown;
+              schemeName?: unknown;
+              schemeCode?: unknown;
+              code?: unknown;
+              fundCode?: unknown;
+            };
+
+            const label = typeof candidate.fundName === 'string'
+              ? candidate.fundName
+              : typeof candidate.schemeName === 'string'
+                ? candidate.schemeName
+                : typeof candidate.name === 'string'
+                  ? candidate.name
+                  : typeof candidate.value === 'string'
+                    ? candidate.value
+                    : '';
+
+            const schemeCode = typeof candidate.schemeCode === 'string'
+              ? candidate.schemeCode
+              : typeof candidate.code === 'string'
+                ? candidate.code
+                : typeof candidate.fundCode === 'string'
+                  ? candidate.fundCode
+                  : undefined;
+
+            return { label, schemeCode, fundName: label } satisfies MatchingFundSuggestion;
+          }
+
+          return { label: '', schemeCode: undefined, fundName: '' } satisfies MatchingFundSuggestion;
+        })
+        .filter((item: MatchingFundSuggestion) => Boolean(item.label));
+
+      if (normalizedSuggestions.length === 0 && suggestionsArray.length > 0) {
+        console.warn('Unable to extract fund names from matching funds response:', responseData);
+      }
+
+      if (matchingFundsRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setMatchingFunds(normalizedSuggestions);
+      setMatchingFundsError('');
+    } catch {
+      if (matchingFundsRequestIdRef.current === requestId) {
+        setMatchingFunds([]);
+        setMatchingFundsError('Unable to load suggested funds.');
+      }
+    } finally {
+      if (matchingFundsRequestIdRef.current === requestId) {
+        setIsMatchingFundsLoading(false);
+      }
+    }
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -113,18 +245,8 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
 
     if (name === 'fundName') {
       setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
+      setCodeError('');
     }
-  };
-
-  const formatSelectedDate = (date: Date | null) => {
-    const selectedDate = date ?? new Date();
-    const year = selectedDate.getFullYear();
-    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(selectedDate.getDate()).padStart(2, '0');
-    const hours = String(selectedDate.getHours()).padStart(2, '0');
-    const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -137,7 +259,6 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
       fundCode: fundMasterData.fundCode,
       fundAmount: fundMasterData.fundAmount,
       currency: fundMasterData.currency,
-      createdDate: formatSelectedDate(selectedDate),
       platform: {
         platformCode: fundMasterData.platform === 'Groww' ? '01' : fundMasterData.platform === 'Coin' ? '02' : '03',
         platformName: fundMasterData.platform,
@@ -184,22 +305,6 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
 
         <form onSubmit={handleSubmit} className="fund-edit-form">
           <div className="field-group">
-            <label htmlFor="investmentDate">Select Date & Time</label>
-            <DatePicker
-              id="investmentDate"
-              selected={selectedDate}
-              onChange={(date: Date | null) => setSelectedDate(date)}
-              dateFormat="dd/MM/yyyy HH:mm"
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              timeCaption="Time"
-              className="date-picker-input"
-              popperPlacement="bottom-start"
-            />
-          </div>
-
-          <div className="field-group">
             <label htmlFor="fundName">Fund Name</label>
             <input
               id="fundName"
@@ -207,8 +312,16 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
               type="text"
               value={fundMasterData.fundName}
               onChange={handleChange}
+              onBlur={handleFundNameBlur}
+              onKeyDown={handleFundNameKeyDown}
               placeholder="Fund Name"
               required
+            />
+            <MatchingFundsSuggestions
+              suggestions={matchingFunds}
+              isLoading={isMatchingFundsLoading}
+              error={matchingFundsError}
+              onSelect={handleMatchingFundsSelect}
             />
           </div>
 
@@ -327,22 +440,6 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
 
         <form onSubmit={handleSubmit}>
           <div className="field-group">
-            <label htmlFor="investmentDate">Select Date & Time</label>
-            <DatePicker
-              id="investmentDate"
-              selected={selectedDate}
-              onChange={(date: Date | null) => setSelectedDate(date)}
-              dateFormat="dd/MM/yyyy HH:mm"
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              timeCaption="Time"
-              className="date-picker-input"
-              popperPlacement="bottom-start"
-            />
-          </div>
-
-          <div className="field-group">
             <label htmlFor="fundName">Fund Name</label>
             <input
               id="fundName"
@@ -350,8 +447,16 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
               type="text"
               value={fundMasterData.fundName}
               onChange={handleChange}
+              onBlur={handleFundNameBlur}
+              onKeyDown={handleFundNameKeyDown}
               placeholder="Fund Name"
               required
+            />
+            <MatchingFundsSuggestions
+              suggestions={matchingFunds}
+              isLoading={isMatchingFundsLoading}
+              error={matchingFundsError}
+              onSelect={handleMatchingFundsSelect}
             />
           </div>
 
