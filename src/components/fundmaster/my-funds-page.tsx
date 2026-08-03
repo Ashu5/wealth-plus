@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import DataTable, { type TableColumn } from 'react-data-table-component';
 import { getUserFunds, updateFund } from '../../services/fund-service';
+import AddFundMasterModal from '../modal/add-fund-master-modal';
 import './my-funds-page.css';
 
 type FundRecord = {
@@ -90,34 +91,34 @@ function MyFundsPage() {
   const [selectedFund, setSelectedFund] = useState<FundRecord | null>(null);
   const [formState, setFormState] = useState<FundFormState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAddFundFormOpen, setIsAddFundFormOpen] = useState(false);
 
-  useEffect(() => {
+  const loadFunds = useCallback(async () => {
     const storedUser = localStorage.getItem('wealth-plus-username')?.trim() || localStorage.getItem('wealth-plus-email')?.trim() || '';
 
-    const loadFunds = async () => {
-      if (!storedUser) {
-        setFunds([]);
-        setIsLoading(false);
-        setError('No user profile found.');
-        return;
-      }
+    if (!storedUser) {
+      setFunds([]);
+      setIsLoading(false);
+      setError('No user profile found.');
+      return;
+    }
 
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await getUserFunds(storedUser);
-        console.log('MyFunds payload:', response);
-        setFunds(normalizeFunds(response));
-      } catch (err) {
-        console.error('Failed to load funds:', err);
-        setError('Unable to load funds right now.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadFunds();
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await getUserFunds(storedUser);
+      setFunds(normalizeFunds(response));
+    } catch (err) {
+      console.error('Failed to load funds:', err);
+      setError('Unable to load funds right now.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadFunds();
+  }, [loadFunds]);
 
   const columns = useMemo<TableColumn<FundRecord>[]>(() => [
     {
@@ -237,8 +238,28 @@ function MyFundsPage() {
             <p className="eyebrow">My Funds</p>
             <h2>All funds added by you</h2>
           </div>
-          <span className="pill">{funds.length} funds</span>
+          <div className="my-funds-actions">
+            <button type="button" className="add-fund-btn" onClick={() => setIsAddFundFormOpen(true)}>
+              Add Fund
+            </button>
+            <span className="pill">{funds.length} funds</span>
+          </div>
         </div>
+
+        {isAddFundFormOpen && (
+          <div className="add-fund-form-shell">
+            <AddFundMasterModal
+              isOpen
+              mode="inline"
+              title="Add New Fund"
+              onClose={() => setIsAddFundFormOpen(false)}
+              onSuccess={() => {
+                setIsAddFundFormOpen(false);
+                void loadFunds();
+              }}
+            />
+          </div>
+        )}
 
         {isLoading ? (
           <div className="my-funds-state">Loading your funds…</div>

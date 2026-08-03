@@ -739,16 +739,18 @@
   justify-content: center;
   padding: 20px;
   z-index: 1000;
+  overflow-y: auto;
 }
 
 .modal-card {
   width: 100%;
   max-width: 440px;
+  max-height: min(90vh, 760px);
   border-radius: 20px;
   border: 1px solid #e5e7eb;
   background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .modal-header {

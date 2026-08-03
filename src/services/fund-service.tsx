@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthToken } from './auth-token';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
 
@@ -64,6 +65,43 @@ export const generateFundCode = async (params: { fundName: string; fundType: str
     }
 };
 
+export const generateFundCodeV2 = async (fundName: string, fundType: string, folioNumber: string) => {
+    try {
+        const response = await axios.post(
+            `${API_BASE_URL}/fund-master/generateFundCode/v2`,
+            { fundName, fundType, folioNumber },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                withCredentials: true,
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error("Error generating fund code:", error);
+        throw error;
+    }
+};
+
+export const getMatchingFunds = async (fundName: string) => {
+    try {
+        const token = getAuthToken();
+        const response = await axios.get(
+            `${API_BASE_URL}/fund-master/matchingFunds/${encodeURIComponent(fundName)}`,
+            {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                withCredentials: true,
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching matching funds:", error);
+        throw error;
+    }
+};
 
 export const addFixedDeposit = async (fixedDepositData: any) => {
     try {
@@ -90,6 +128,25 @@ export const getUserFixedDeposits = async (userName: string) => {
         return response.data;
     } catch (error) {
         console.error("Error fetching user fixed deposits:", error);
+        throw error;
+    }
+};
+
+export const addFundV2 = async (fundData:any) => {
+    try {
+        const response = await axios.post(
+            `${API_BASE_URL}/fund-master/addFund/v2`,
+            fundData,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error("Error adding fund:", error);
         throw error;
     }
 };
