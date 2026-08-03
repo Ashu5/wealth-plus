@@ -166,14 +166,7 @@ function RecentTransaction({
               )}
             </div>
           ) : null}
-          {/* <button
-            type="button"
-            className="visibility-toggle"
-            onClick={() => setIsVisible((prev) => !prev)}
-            aria-label={isVisible ? 'Hide recent transaction amounts' : 'Show recent transaction amounts'}
-          >
-            {isVisible ? '🙈' : '👁️'}
-          </button> */}
+          
         </div>
       </div>
 
