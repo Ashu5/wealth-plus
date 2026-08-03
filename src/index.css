@@ -38,6 +38,28 @@ body {
   overflow-x: hidden;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.modal-card {
+  width: min(560px, 100%);
+  max-height: min(90vh, 760px);
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2);
+}
+
 img,
 svg,
 canvas,
