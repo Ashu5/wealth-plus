@@ -33,6 +33,17 @@ export const getUserFunds = async (userId: string) => {
     }
 };
 
+
+export const getUserFundsV2 = async (userEmail: string) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/fund-master/allUserFunds/v2/${userEmail}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching user funds:", error);
+        throw error;
+    }
+};
+
 export const updateFund = async (fundId: string, fundData: any) => {
     try {
         const response = await axios.put(

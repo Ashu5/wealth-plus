@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { getUserFunds } from '../../services/fund-service';
+import { getUserFunds, getUserFundsV2 } from '../../services/fund-service';
 import { addFundTransaction, type FundTransaction } from '../../services/transaction-service';
 
 type AddTrackingModalProps = {
@@ -52,6 +52,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
 
     const loadFunds = async () => {
       const storedUser = localStorage.getItem('wealth-plus-username')?.trim()|| localStorage.getItem('wealth-plus-email')?.trim();
+      const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || '';
       const candidateUsers = [storedUser].filter(
         (value): value is string => Boolean(value)
       );
@@ -60,7 +61,7 @@ function AddTrackingModal({ isOpen, onClose, onSuccess }: AddTrackingModalProps)
 
       for (const userId of candidateUsers) {
         try {
-          const payload = await getUserFunds(userId);
+          const payload = await getUserFundsV2(userEmail);
           const funds = Array.isArray(payload)
             ? payload
             : Array.isArray(payload?.data)

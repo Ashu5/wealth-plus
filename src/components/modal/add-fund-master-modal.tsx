@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import '../fundmaster/my-funds-page.css';
 import MatchingFundsSuggestions from './matching-funds-suggestions';
-import { addFund, generateFundCodeV2, getMatchingFunds } from '../../services/fund-service';
+import { addFund, addFundV2, generateFundCodeV2, getMatchingFunds } from '../../services/fund-service';
 
 type AddFundMasterModalProps = {
   isOpen?: boolean;
@@ -270,7 +270,7 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
 
     try {
       setIsSubmitting(true);
-      await addFund(fundPayload);
+      await addFundV2(fundPayload);
       setSuccessMessage('Fund Added successfully.');
       window.setTimeout(() => {
         setSuccessMessage('');
@@ -357,19 +357,6 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
           </div>
 
           <div className="field-group">
-            <label htmlFor="fundAmount">Fund Amount</label>
-            <input
-              id="fundAmount"
-              name="fundAmount"
-              type="number"
-              value={fundMasterData.fundAmount}
-              onChange={handleChange}
-              placeholder="1222"
-              required
-            />
-          </div>
-
-          <div className="field-group">
             <label htmlFor="folioNumber">Folio Number</label>
             <input
               id="folioNumber"
@@ -378,6 +365,19 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
               value={fundMasterData.folioNumber}
               onChange={handleChange}
               placeholder="002"
+              required
+            />
+          </div>
+
+          <div className="field-group">
+            <label htmlFor="fundAmount">SIP Amount</label>
+            <input
+              id="fundAmount"
+              name="fundAmount"
+              type="number"
+              value={fundMasterData.fundAmount}
+              onChange={handleChange}
+              placeholder="1222"
               required
             />
           </div>
@@ -491,6 +491,7 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
             </select>
           </div>
 
+
           <div className="field-group">
             <label htmlFor="fundAmount">Fund Amount</label>
             <input
@@ -503,6 +504,7 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
               required
             />
           </div>
+
 
           <div className="field-group">
             <label htmlFor="folioNumber">Folio Number</label>
