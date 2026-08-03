@@ -10,7 +10,6 @@ import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../s
 import AddAllocationModal from '../modal/add-allocation-modal';
 import AddTrackingModal from '../modal/add-tracking-modal';
 import AddGrowthModal from '../modal/add-growth-modal';
-import AddFundMasterModal from '../modal/add-fund-master-modal';
 import AddFDModal from '../modal/add-fd-modal';
 import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
 import RecentTransaction from '../recenttransaction/recent-transaction';
@@ -166,7 +165,6 @@ function Dashboard() {
   const [showAllocationModal, setShowAllocationModal] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [showGrowthModal, setShowGrowthModal] = useState(false);
-  const [showFundMasterModal, setShowFundMasterModal] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
   const getStoredUser = () => {
@@ -326,10 +324,6 @@ function Dashboard() {
     setShowGrowthModal(true);
   };
 
-  const openFundMasterModal = () => {
-    setShowFundMasterModal(true);
-  };
-
   
 const resetAddFdForm = () => {
   setFormData({
@@ -446,7 +440,6 @@ const handleSubmit = async (e: FormEvent) => {
         }}
       />
       <AddGrowthModal isOpen={showGrowthModal} onClose={() => setShowGrowthModal(false)} />
-      <AddFundMasterModal isOpen={showFundMasterModal} onClose={() => setShowFundMasterModal(false)} />
 
       <div className="dashboard-grid">
         <div>
@@ -471,7 +464,6 @@ const handleSubmit = async (e: FormEvent) => {
             totalGainLossPercentage={portfolioSummaryStats.totalGainLossPercentage}
             overallStatus={portfolioSummaryStats.overallStatus}
             actions={[
-              { id: 'fundMaster', label: 'Fund Master', onClick: openFundMasterModal },
               { id: 'allocate', label: 'Add Allocation', onClick: openAllocationModal },
               { id: 'track', label: 'Add Tracking', onClick: openTrackingModal },
               { id: 'grow', label: 'Add Growth', onClick: openGrowthModal },

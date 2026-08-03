@@ -18,7 +18,6 @@ type InvestmentSummarySectionProps = {
   onAllocate?: () => void;
   onTrack?: () => void;
   onGrow?: () => void;
-  onFundMaster?: () => void;
   onAddFD?: () => void;
   steps?: StepDefinition[];
 };
@@ -63,7 +62,6 @@ function InvestmentSummarySection({
   onAllocate,
   onTrack,
   onGrow,
-  onFundMaster,
   onAddFD,
   steps = defaultSteps,
 }: InvestmentSummarySectionProps) {
@@ -82,11 +80,6 @@ function InvestmentSummarySection({
 
     if (stepId === 'grow') {
       onGrow?.();
-      return;
-    }
-
-    if (stepId === 'fundMaster') {
-      onFundMaster?.();
       return;
     }
 
