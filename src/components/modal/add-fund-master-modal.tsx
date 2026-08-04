@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import '../fundmaster/my-funds-page.css';
 import MatchingFundsSuggestions from './matching-funds-suggestions';
-import { addFund, addFundV2, generateFundCodeV2, getMatchingFunds } from '../../services/fund-service';
+import { addFundV2, generateFundCodeV2, getMatchingFunds } from '../../services/fund-service';
 
 type AddFundMasterModalProps = {
   isOpen?: boolean;

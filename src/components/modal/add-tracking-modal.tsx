@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { getUserFunds, getUserFundsV2 } from '../../services/fund-service';
+import { getUserFundsV2 } from '../../services/fund-service';
 import { addFundTransaction, type FundTransaction } from '../../services/transaction-service';
 
 type AddTrackingModalProps = {

@@ -1,8 +1,23 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import DataTable, { type TableColumn } from 'react-data-table-component';
-import {  getUserFundsV2, updateFund } from '../../services/fund-service';
+import {  getUserFundsV2, updateFundV2 } from '../../services/fund-service';
 import AddFundMasterModal from '../modal/add-fund-master-modal';
 import './my-funds-page.css';
+
+const platformDetailsByName: Record<string, { platformCode: string; platformDescription: string }> = {
+  Groww: {
+    platformCode: 'GW-01',
+    platformDescription: 'Groww',
+  },
+  Coin: {
+    platformCode: 'GN-01',
+    platformDescription: 'Coin by Zerodha',
+  },
+  Smallcase: {
+    platformCode: 'SC-01',
+    platformDescription: 'Smallcase',
+  },
+};
 
 type FundRecord = {
   id: string;
@@ -191,10 +206,27 @@ function MyFundsPage() {
 
     try {
       setIsSaving(true);
-      await updateFund(selectedFund.id, {
-        ...selectedFund,
-        ...formState,
-        fundAmount: Number(formState.fundAmount),
+      const selectedPlatform = platformDetailsByName[formState.platform] ?? {
+        platformCode: formState.fundCode,
+        platformDescription: formState.platform,
+      };
+      const userName = localStorage.getItem('wealth-plus-username')?.trim() || selectedFund.userName || '';
+      const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || '';
+
+      await updateFundV2(formState.fundCode, {
+        fundName: formState.fundName,
+        fundCode: formState.fundCode,
+        fundType: formState.fundType,
+        folioNumber: formState.folioNumber,
+        fundAmount: formState.fundAmount,
+        platform: {
+          platformName: formState.platform,
+          platformCode: selectedPlatform.platformCode,
+          platformDescription: selectedPlatform.platformDescription,
+        },
+        currency: formState.currency,
+        userName,
+        userEmail,
       });
 
       setFunds((prev) => prev.map((fund) => (fund.id === selectedFund.id ? {

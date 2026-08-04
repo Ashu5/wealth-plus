@@ -63,6 +63,44 @@ export const updateFund = async (fundId: string, fundData: any) => {
     }
 };
 
+type UpdateFundV2Payload = {
+    fundName: string;
+    fundCode: string;
+    fundType: string;
+    folioNumber: string;
+    fundAmount: string;
+    platform: {
+        platformName: string;
+        platformCode: string;
+        platformDescription: string;
+    };
+    currency: string;
+    userName: string;
+    userEmail: string;
+};
+
+export const updateFundV2 = async (fundCode: string, payload: UpdateFundV2Payload) => {
+    try {
+        const token = getAuthToken();
+        const response = await axios.put(
+            `${API_BASE_URL}/fund-master/updateFund/${encodeURIComponent(fundCode)}`,
+            payload,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                withCredentials: true,
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error("Error updating fund v2:", error);
+        throw error;
+    }
+};
+
 export const generateFundCode = async (params: { fundName: string; fundType: string; folioNumber: string }) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/fund-master/generateFundCode`, {
