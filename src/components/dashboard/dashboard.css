@@ -267,8 +267,16 @@
   color: #0f172a;
 }
 
-.gain {
+.summary-card .summary-actions .gain,
+.summary-card .summary-item strong.gain {
   color: #16a34a;
+  font-weight: 600;
+}
+
+.summary-card .summary-actions .loss,
+.summary-card .summary-item strong.loss {
+  color: #dc2626;
+  font-weight: 700;
 }
 
 .flowchart {

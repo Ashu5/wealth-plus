@@ -7,12 +7,14 @@ import ProfileComponent from '../profile/profile';
 function Header() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
+        setProfileMenuOpen(false);
       }
     };
 
@@ -22,7 +24,25 @@ function Header() {
 
   const handleNavigate = (path: string) => {
     setMenuOpen(false);
+    setProfileMenuOpen(false);
     navigate(path, { state: { fromApp: true } });
+  };
+
+  const handleHamburgerToggle = () => {
+    setMenuOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setProfileMenuOpen(false);
+      }
+      return next;
+    });
+  };
+
+  const handleProfileMenuChange = (isOpen: boolean) => {
+    setProfileMenuOpen(isOpen);
+    if (isOpen) {
+      setMenuOpen(false);
+    }
   };
 
   return (
@@ -34,7 +54,7 @@ function Header() {
             <button
               type="button"
               className="header-hamburger"
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={handleHamburgerToggle}
               aria-label="Open menu"
               aria-expanded={menuOpen}
             >
@@ -57,7 +77,7 @@ function Header() {
               </div>
             )}
           </div>
-          <ProfileComponent />
+          <ProfileComponent isMenuOpen={profileMenuOpen} onMenuOpenChange={handleProfileMenuChange} />
         </div>
       </div>
     </header>
