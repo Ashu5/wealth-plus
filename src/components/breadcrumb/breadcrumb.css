@@ -1,11 +1,16 @@
 .breadcrumb {
   padding: 0 24px 4px;
+  position: relative;
+  z-index: 1;
+  background: #fff;
 }
 
 .breadcrumb-content {
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .breadcrumb ol {
