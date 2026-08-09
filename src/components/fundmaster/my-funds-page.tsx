@@ -1,8 +1,23 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import DataTable, { type TableColumn } from 'react-data-table-component';
-import { getUserFunds, updateFund } from '../../services/fund-service';
+import {  getUserFundsV2, updateFundV2 } from '../../services/fund-service';
 import AddFundMasterModal from '../modal/add-fund-master-modal';
 import './my-funds-page.css';
+
+const platformDetailsByName: Record<string, { platformCode: string; platformDescription: string }> = {
+  Groww: {
+    platformCode: 'GW-01',
+    platformDescription: 'Groww',
+  },
+  Coin: {
+    platformCode: 'GN-01',
+    platformDescription: 'Coin by Zerodha',
+  },
+  Smallcase: {
+    platformCode: 'SC-01',
+    platformDescription: 'Smallcase',
+  },
+};
 
 type FundRecord = {
   id: string;
@@ -95,7 +110,7 @@ function MyFundsPage() {
 
   const loadFunds = useCallback(async () => {
     const storedUser = localStorage.getItem('wealth-plus-username')?.trim() || localStorage.getItem('wealth-plus-email')?.trim() || '';
-
+    const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || '';
     if (!storedUser) {
       setFunds([]);
       setIsLoading(false);
@@ -106,7 +121,7 @@ function MyFundsPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await getUserFunds(storedUser);
+      const response = await getUserFundsV2(userEmail);
       setFunds(normalizeFunds(response));
     } catch (err) {
       console.error('Failed to load funds:', err);
@@ -140,7 +155,7 @@ function MyFundsPage() {
       grow: 1,
     },
     {
-      name: 'Amount',
+      name: 'SIP Amount',
       cell: (row) => `₹${row.fundAmount.toLocaleString()}`,
       sortable: true,
       sortFunction: (a, b) => a.fundAmount - b.fundAmount,
@@ -191,10 +206,27 @@ function MyFundsPage() {
 
     try {
       setIsSaving(true);
-      await updateFund(selectedFund.id, {
-        ...selectedFund,
-        ...formState,
-        fundAmount: Number(formState.fundAmount),
+      const selectedPlatform = platformDetailsByName[formState.platform] ?? {
+        platformCode: formState.fundCode,
+        platformDescription: formState.platform,
+      };
+      const userName = localStorage.getItem('wealth-plus-username')?.trim() || selectedFund.userName || '';
+      const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || '';
+
+      await updateFundV2(formState.fundCode, {
+        fundName: formState.fundName,
+        fundCode: formState.fundCode,
+        fundType: formState.fundType,
+        folioNumber: formState.folioNumber,
+        fundAmount: formState.fundAmount,
+        platform: {
+          platformName: formState.platform,
+          platformCode: selectedPlatform.platformCode,
+          platformDescription: selectedPlatform.platformDescription,
+        },
+        currency: formState.currency,
+        userName,
+        userEmail,
       });
 
       setFunds((prev) => prev.map((fund) => (fund.id === selectedFund.id ? {

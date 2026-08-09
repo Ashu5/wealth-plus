@@ -4,10 +4,14 @@ import './profile.css';
 import { profileDetails, trackLogoutActivity } from '../../services/user-service';
 import { clearAuthToken } from '../../services/auth-token';
 
-function ProfileComponent() {
+type ProfileComponentProps = {
+  isMenuOpen: boolean;
+  onMenuOpenChange: (isOpen: boolean) => void;
+};
+
+function ProfileComponent({ isMenuOpen, onMenuOpenChange }: ProfileComponentProps) {
   const navigate = useNavigate();
   const [userName] = useState(() => localStorage.getItem('wealth-plus-username') || 'Guest');
-  const [menuOpen, setMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -35,17 +39,17 @@ function ProfileComponent() {
   }, []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!isMenuOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
+        onMenuOpenChange(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpen]);
+  }, [isMenuOpen, onMenuOpenChange]);
 
   const getInitials = (value: string) => {
     const trimmed = value.trim();
@@ -100,7 +104,7 @@ function ProfileComponent() {
       localStorage.removeItem('wealth-plus-last-login');
       localStorage.removeItem('wealth-plus-password');
       clearAuthToken();
-      setMenuOpen(false);
+      onMenuOpenChange(false);
       navigate('/home', { replace: true });
     }
   };
@@ -111,21 +115,21 @@ function ProfileComponent() {
         <button
           type="button"
           className="profile-button"
-          onClick={() => setMenuOpen((prev) => !prev)}
+          onClick={() => onMenuOpenChange(!isMenuOpen)}
           aria-haspopup="menu"
-          aria-expanded={menuOpen}
+          aria-expanded={isMenuOpen}
         >
           <span className="profile-avatar">{getInitials(userName)}</span>
         </button>
 
-        {menuOpen && (
+        {isMenuOpen && (
           <div className="profile-menu" role="menu">
             <button
               type="button"
               className="profile-menu-item"
               role="menuitem"
               onClick={() => {
-                setMenuOpen(false);
+                onMenuOpenChange(false);
                 navigate('/profile', { state: { fromApp: true } });
               }}
             >
@@ -138,7 +142,7 @@ function ProfileComponent() {
                 className="profile-menu-item"
                 role="menuitem"
                 onClick={() => {
-                  setMenuOpen(false);
+                  onMenuOpenChange(false);
                   navigate('/admin', { state: { fromApp: true } });
                 }}
               >

@@ -34,7 +34,7 @@ function OverallSummary({ totalInvestment, totalCurrentValue, totalGainLoss, gai
           >
             {isVisible ? '🙈' : '👁️'}
           </button>
-          <span className="pill">{gainLossPercentage.toFixed(2)}%</span>
+          <span className={totalGainLoss >= 0 ? 'gain' : 'loss'}>{gainLossPercentage.toFixed(2)}%</span>
         </div>
       </div>
 
