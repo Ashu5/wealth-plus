@@ -24,9 +24,10 @@ type YearlyFixedDepositRow = {
 };
 
 const getStoredUser = () =>
-  localStorage.getItem('wealth-plus-username')?.trim() ||
-  localStorage.getItem('wealth-plus-email')?.split('@')[0]?.trim() ||
-  '';
+  localStorage.getItem('wealth-plus-username')?.trim() || '';
+
+const getStoredUserEmail = () =>
+  localStorage.getItem('wealth-plus-email')?.trim() || '';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -134,13 +135,14 @@ function MyReportsPage() {
 
     const loadInsights = async () => {
       const storedUser = getStoredUser();
+      const userEmail = getStoredUserEmail();
       setLoading(true);
       setError(null);
 
       try {
         const [portfolioPayload, fixedDeposits] = await Promise.all([
           fetchPortfolioSummary(storedUser),
-          getUserFixedDeposits(storedUser),
+          getUserFixedDeposits(userEmail),
         ]);
 
         if (!isMounted) return;

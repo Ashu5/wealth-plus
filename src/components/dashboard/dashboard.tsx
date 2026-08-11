@@ -97,6 +97,23 @@ const buildFixedDepositEntries = (payload: unknown): FixedDepositEntry[] => {
     return [];
   };
 
+  const parseIsActive = (value: unknown) => {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'number') {
+      return value === 1;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      return normalized === 'true' || normalized === '1';
+    }
+
+    return false;
+  };
+
   const getTenureLabel = (startDate: string, endDate: string) => {
     if (!startDate || !endDate) {
       return 'N/A';
@@ -123,15 +140,16 @@ const buildFixedDepositEntries = (payload: unknown): FixedDepositEntry[] => {
     return {
       id: String(record.id || record.fdNumber || record.userName || `${index}`),
       month: transactionDate ? formatMonth(transactionDate) : '',
-      investmentType: 'Fixed Deposit',
+      investmentType: 'Fixed Deposit' as const,
       bank: String(record.bank || ''),
       fdNumber: String(record.fdNumber || schemeLabel || 'Fixed Deposit'),
       amount: Number(record.amountFixed ?? record.amount ?? 0),
       tenure: getTenureLabel(transactionDate, maturityDate),
       rate: Number(record.interestRate ?? 0),
       maturityDate: maturityDate,
+      active: parseIsActive(record.active ?? record.isActive ?? true),
     };
-  });
+  }).filter((entry) => entry.active);
 };
 
 function Dashboard() {
@@ -175,6 +193,13 @@ function Dashboard() {
     );
   };
 
+    const getStoredUserEmail = () => {
+    return (
+      localStorage.getItem('wealth-plus-email')?.trim() ||
+      ''
+    );
+  };
+
   const loadPortfolioSummary = async () => {
     const storedUser = getStoredUser();
 
@@ -209,13 +234,13 @@ function Dashboard() {
   };
 
   const loadFixedDeposits = async () => {
-    const storedUser = getStoredUser();
+    const userEmail=getStoredUserEmail();
 
     setFixedDepositLoading(true);
     setFixedDepositError(null);
 
     try {
-      const deposits = await getUserFixedDeposits(storedUser);
+      const deposits = await getUserFixedDeposits(userEmail);
       setFixedDepositEntries(buildFixedDepositEntries(deposits));
     } catch (error) {
       console.error('Error loading fixed deposits:', error);
@@ -407,6 +432,7 @@ const handleSubmit = async (e: FormEvent) => {
       tenure: formData.tenure || '12 Months',
       rate: interestRate,
       maturityDate: payload.maturityDate,
+      isActive: true,
     };
 
     setFixedDepositEntries((prev) => [entry, ...prev]);
