@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { generateEmailOtp, verifyEmailOtp } from '../../services/auth-token';
 import './e-wallet-page.css';
 
 type WalletSection = {
@@ -10,7 +11,6 @@ type WalletSection = {
 type SecurityStep = 'email' | 'otp' | 'verified';
 
 const TRUSTED_ACCESS_KEY = 'wealth-plus-ewallet-verified-at';
-const OTP_STORAGE_KEY = 'wealth-plus-ewallet-otp';
 const OTP_EXPIRY_STORAGE_KEY = 'wealth-plus-ewallet-otp-expiry';
 const OTP_ATTEMPTS_STORAGE_KEY = 'wealth-plus-ewallet-otp-attempts';
 const LOCKED_UNTIL_STORAGE_KEY = 'wealth-plus-ewallet-locked-until';
@@ -79,32 +79,21 @@ function EWalletPage() {
     return `${masked}@${domain}`;
   };
 
-  const generateOtp = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
-
   const clearOtpArtifacts = () => {
-    sessionStorage.removeItem(OTP_STORAGE_KEY);
     sessionStorage.removeItem(OTP_EXPIRY_STORAGE_KEY);
     sessionStorage.removeItem(OTP_ATTEMPTS_STORAGE_KEY);
   };
 
-  const sendOtp = () => {
-    const otp = generateOtp();
+  const sendOtp = async () => {
     const expiry = Date.now() + OTP_EXPIRY_MS;
-    sessionStorage.setItem(OTP_STORAGE_KEY, otp);
+    await generateEmailOtp({ email: registeredEmail });
     sessionStorage.setItem(OTP_EXPIRY_STORAGE_KEY, String(expiry));
     sessionStorage.setItem(OTP_ATTEMPTS_STORAGE_KEY, '0');
     setSecondsLeft(Math.ceil(OTP_EXPIRY_MS / 1000));
-    setSecurityMessage(`OTP sent to ${maskEmail(registeredEmail)}. It expires in 2 minutes.`);
-
-    if (import.meta.env.DEV) {
-      // Development aid: simulate OTP delivery channel.
-      console.info('[eWallet Security] OTP code:', otp);
-    }
+    setSecurityMessage(`Email OTP sent to ${maskEmail(registeredEmail)}. It expires in 2 minutes.`);
   };
 
-  const handleEmailVerification = (event: FormEvent) => {
+  const handleEmailVerification = async (event: FormEvent) => {
     event.preventDefault();
     setSecurityError(null);
 
@@ -118,11 +107,15 @@ function EWalletPage() {
       return;
     }
 
-    setSecurityStep('otp');
-    sendOtp();
+    try {
+      await sendOtp();
+      setSecurityStep('otp');
+    } catch {
+      setSecurityError('Unable to generate OTP right now. Please try again.');
+    }
   };
 
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     setSecurityError(null);
 
     const lockedUntil = Number(sessionStorage.getItem(LOCKED_UNTIL_STORAGE_KEY) ?? 0);
@@ -131,10 +124,14 @@ function EWalletPage() {
       return;
     }
 
-    sendOtp();
+    try {
+      await sendOtp();
+    } catch {
+      setSecurityError('Unable to resend OTP right now. Please try again.');
+    }
   };
 
-  const handleOtpVerification = (event: FormEvent) => {
+  const handleOtpVerification = async (event: FormEvent) => {
     event.preventDefault();
     setSecurityError(null);
 
@@ -144,11 +141,10 @@ function EWalletPage() {
       return;
     }
 
-    const storedOtp = sessionStorage.getItem(OTP_STORAGE_KEY) ?? '';
     const expiryAt = Number(sessionStorage.getItem(OTP_EXPIRY_STORAGE_KEY) ?? 0);
     const now = Date.now();
 
-    if (!storedOtp || expiryAt <= now) {
+    if (expiryAt <= now) {
       setSecurityError('OTP expired. Request a new OTP to continue.');
       clearOtpArtifacts();
       setSecondsLeft(0);
@@ -157,7 +153,20 @@ function EWalletPage() {
 
     const currentAttempts = Number(sessionStorage.getItem(OTP_ATTEMPTS_STORAGE_KEY) ?? 0);
 
-    if (otpInput.trim() !== storedOtp) {
+    try {
+      await verifyEmailOtp({
+        email: registeredEmail,
+        otp: otpInput.trim(),
+      });
+
+      sessionStorage.setItem(TRUSTED_ACCESS_KEY, String(now));
+      clearOtpArtifacts();
+      sessionStorage.removeItem(LOCKED_UNTIL_STORAGE_KEY);
+      setLockedSecondsLeft(0);
+      setSecurityStep('verified');
+      setOtpInput('');
+      setSecurityMessage('Two-factor verification successful. eWallet unlocked.');
+    } catch {
       const updatedAttempts = currentAttempts + 1;
       sessionStorage.setItem(OTP_ATTEMPTS_STORAGE_KEY, String(updatedAttempts));
 
@@ -170,17 +179,7 @@ function EWalletPage() {
       } else {
         setSecurityError(`Invalid OTP. ${MAX_OTP_ATTEMPTS - updatedAttempts} attempt(s) remaining.`);
       }
-
-      return;
     }
-
-    sessionStorage.setItem(TRUSTED_ACCESS_KEY, String(now));
-    clearOtpArtifacts();
-    sessionStorage.removeItem(LOCKED_UNTIL_STORAGE_KEY);
-    setLockedSecondsLeft(0);
-    setSecurityStep('verified');
-    setOtpInput('');
-    setSecurityMessage('Two-factor verification successful. eWallet unlocked.');
   };
 
   const sections = useMemo<WalletSection[]>(() => {
