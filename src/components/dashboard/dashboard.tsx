@@ -432,7 +432,7 @@ const handleSubmit = async (e: FormEvent) => {
       tenure: formData.tenure || '12 Months',
       rate: interestRate,
       maturityDate: payload.maturityDate,
-      isActive: true,
+      active: true,
     };
 
     setFixedDepositEntries((prev) => [entry, ...prev]);
