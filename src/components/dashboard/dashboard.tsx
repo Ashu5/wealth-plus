@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import './dashboard.css';
 import FixedDepositsSummarySection from '../deposit/deposit-summary-section';
+import LiabilitySection, { type LiabilityItem } from '../liabilities/liability-section';
 import MonthlySummary from './monthly-summary';
 import OverallSummary from './overall-summary';
 import TrendsSection from './trends-section';
 import type { FixedDepositEntry, ModalConfig, PortfolioEntry } from './types';
 import { addFixedDeposit, getUserFixedDeposits } from '../../services/fund-service';
 import { fetchPortfolioSummary, type PortfolioSummaryApiResponse } from '../../services/portfolio-service';
+import { fetchUserLiabilities, type LiabilityApiRecord } from '../../services/liability-service';
 import AddAllocationModal from '../modal/add-allocation-modal';
 import AddTrackingModal from '../modal/add-tracking-modal';
 import AddGrowthModal from '../modal/add-growth-modal';
@@ -300,6 +302,46 @@ function Dashboard() {
   const totalGainLoss = totalCurrentValue - totalInvestment;
   const totalGainLossPercentage = totalInvestment > 0 ? (totalGainLoss / totalInvestment) * 100 : 0;
 
+  const [liabilityEntries, setLiabilityEntries] = useState<LiabilityItem[]>([]);
+
+  useEffect(() => {
+    const loadLiabilities = async () => {
+      const storedEmail = localStorage.getItem('wealth-plus-email')?.trim();
+      const storedUser = localStorage.getItem('wealth-plus-username')?.trim();
+      const emailToUse = storedEmail || (storedUser ? `${storedUser}@email.com` : 'test@email.com');
+
+      try {
+        const response = await fetchUserLiabilities(emailToUse);
+
+        const mappedLiabilities = (response as LiabilityApiRecord[])
+          .map((liability) => {
+            const liabilityType = liability.liabilityType || liability.liabilityName || 'Liability';
+            const amountNumber = Number(
+              liability.outstandingAmount ?? liability.liabilityAmount ?? liability.amount ?? liability.currentOutstanding ?? 0
+            );
+
+            return {
+              liabilityType: String(liabilityType).replace(/_/g, ' '),
+              amount: Number.isFinite(amountNumber) ? amountNumber : 0,
+              loanNumber: liability.liabilityNumber || liability.loanNumber || 'N/A',
+              loanDate: liability.loanDate || liability.startDate || 'N/A',
+              loanProvider: liability.lender || liability.loanProvider || 'Unknown Provider',
+            } satisfies LiabilityItem;
+          })
+          .filter((liability) => liability.amount > 0);
+
+        setLiabilityEntries(mappedLiabilities.length > 0 ? mappedLiabilities : []);
+      } catch (error) {
+        console.error('Error loading liabilities:', error);
+        setLiabilityEntries([]);
+      }
+    };
+
+    void loadLiabilities();
+  }, []);
+
+  const overallLiability = liabilityEntries.reduce((sum, item) => sum + item.amount, 0);
+
   const openModal = (defaultInvestmentType = 'Bonds/Others') => {
     setActiveModal(monthlyModalConfig);
     setModalError(null);
@@ -470,12 +512,18 @@ const handleSubmit = async (e: FormEvent) => {
               { id: 'fixedDeposit', label: 'Add Fixed Deposit', onClick: () => openModal('Fixed Deposit') },
             ]}
           />
+
+          <LiabilitySection
+            liabilities={liabilityEntries}
+            totalLiability={overallLiability}
+          />
         </div>
 
         <div className="right-column">
           <OverallSummary
-            totalInvestment={totalInvestment}
-            totalCurrentValue={totalCurrentValue}
+            totalInvestment={totalInvestment - overallLiability}
+            totalCurrentValue={totalCurrentValue - overallLiability}
+            totalLiabilities={overallLiability}
             totalGainLoss={totalGainLoss}
             gainLossPercentage={totalGainLossPercentage}
           />
