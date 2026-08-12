@@ -194,6 +194,27 @@ export const ssoLogin = async (firebaseToken: string) => {
   return response;
 };
 
+export const refreshAccessToken = async (accessToken: string, refreshToken: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/activity/refreshToken`,
+      { refreshToken },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      }
+    );
+
+    return response;
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    throw error;
+  }
+};
+
 export const resetPassword = async (token: string, newPassword: string) => {
   try {
     const response = await axios.post(
