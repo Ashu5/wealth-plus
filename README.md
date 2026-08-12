@@ -1,5 +1,6 @@
 # Wealth Plus UI
 
+The application is registred www.koshmitra.com.
 ## Firebase deployment with GitHub secrets
 
 This app is prepared to inject Firebase and API values at build time from GitHub Actions secrets.
