@@ -136,6 +136,18 @@ function ProfileComponent({ isMenuOpen, onMenuOpenChange }: ProfileComponentProp
               My Profile
             </button>
 
+            <button
+              type="button"
+              className="profile-menu-item"
+              role="menuitem"
+              onClick={() => {
+                onMenuOpenChange(false);
+                navigate('/e-wallet', { state: { fromApp: true } });
+              }}
+            >
+              eWallet
+            </button>
+
             {isAdmin && (
               <button
                 type="button"

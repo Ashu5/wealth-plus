@@ -75,13 +75,3 @@ export const forceLogoutUser = async (email: string) => {
   return response.data;
 };
 
-export const sendContactMessage = async (payload: { name: string; email: string; message: string }) => {
-  const response = await axios.post(`${API_BASE_URL}/admin/contact`, payload, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    withCredentials: true,
-  });
-
-  return response.data;
-};
