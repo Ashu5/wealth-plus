@@ -24,6 +24,7 @@ export type FixedDepositEntry = {
   tenure: string;
   rate: number;
   maturityDate: string;
+  active: boolean;
 };
 
 export type StepDefinition = {
