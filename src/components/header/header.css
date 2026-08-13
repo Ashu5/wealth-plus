@@ -26,8 +26,8 @@
 }
 
 .header-logo {
-  max-width: 280px;
-  max-height: 60px;
+  max-width: 360px;
+  max-height: 84px;
   width: auto;
   height: auto;
   object-fit: contain;
@@ -120,8 +120,8 @@
   }
 
   .header-logo {
-    max-width: 210px;
-    max-height: 46px;
+    max-width: 260px;
+    max-height: 60px;
   }
 
   .header-actions {

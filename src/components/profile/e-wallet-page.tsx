@@ -255,7 +255,6 @@ function EWalletPage() {
         <section className="ewallet-card ewallet-security-card">
           <div className="ewallet-header">
             <p className="eyebrow">eWallet</p>
-            <h2>Security Verification Required</h2>
             <p className="ewallet-subtitle">Two-factor verification is required before you can view financial details.</p>
           </div>
 

@@ -96,7 +96,6 @@ function InvestmentSummarySection({
       <div className="summary-header summary-header-compact">
         <div>
           <p className="eyebrow">Investment Summary</p>
-          <h2>Monthly Overview</h2>
         </div>
         <div className="summary-menu">
           <button

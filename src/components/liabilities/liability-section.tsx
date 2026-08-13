@@ -7,7 +7,7 @@ import {
   Landmark,
   WalletCards,
 } from 'lucide-react';
-import { FaEdit } from 'react-icons/fa';
+import { FaPenSquare } from 'react-icons/fa';
 import { addLiability, updateOutstandingAmount } from '../../services/liability-service';
 import './liability-section.css';
 
@@ -205,7 +205,6 @@ export default function LiabilitySection({ liabilities, totalLiability }: Liabil
         <div className="liabilities-title-group">
           <div>
             <p className="eyebrow">Borrowings</p>
-            <h2>Liabilities</h2>
           </div>
           <button type="button" className="add-liability-btn" onClick={() => setIsModalOpen(true)}>
             + Add Liability
@@ -250,7 +249,7 @@ export default function LiabilitySection({ liabilities, totalLiability }: Liabil
                 }}
                 aria-label={`Edit ${liability.liabilityType} liability`}
               >
-                <FaEdit size={12} />
+                <FaPenSquare size={16} aria-hidden="true" />
               </button>
 
               <div className="liability-flipper">

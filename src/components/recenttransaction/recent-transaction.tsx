@@ -129,7 +129,6 @@ function RecentTransaction({
       <div className="recent-transactions-header">
         <div>
           <p className="eyebrow">Latest Activity</p>
-          <h2>Recent Transactions</h2>
         </div>
         <div className="summary-actions">
           {actions.length > 0 ? (

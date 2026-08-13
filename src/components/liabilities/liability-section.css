@@ -90,28 +90,34 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 3;
+  z-index: 5;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 30px;
   height: 30px;
-  border: 1px solid rgba(67, 56, 202, 0.28);
+  border: 1px solid #cbd5e1;
   border-radius: 999px;
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
-  color: #ffffff;
-  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.24);
+  background: rgba(255, 255, 255, 0.9);
+  color: #475569;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .liability-edit-btn:hover {
-  background: linear-gradient(135deg, #3730a3 0%, #4338ca 100%);
+  background: #ffffff;
+  border-color: #94a3b8;
+  color: #1d4ed8;
+  transform: translateY(-1px);
 }
 
 .liability-edit-btn svg {
   display: block;
-  color: #da6e6e;
-  fill: currentColor;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  pointer-events: none;
 }
 
 .liability-flipper {
