@@ -233,3 +233,54 @@ export const resetPassword = async (token: string, newPassword: string) => {
     throw error;
   }
 };
+
+export const sendContactMessage = async (payload: { name: string; email: string; message: string }) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/user/support`, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    });
+
+    return response.data;
+  } catch (error) {
+    // Backend returns 400 with the existing ticket info when a support request is already open.
+    if (axios.isAxiosError(error) && error.response) {
+      return error.response.data;
+    }
+
+    throw error;
+  }
+};
+
+export type SupportTicket = {
+  serviceId?: string;
+  createdAt?: string;
+  status?: string;
+  message?: string;
+  [key: string]: unknown;
+};
+
+export const fetchSupportTickets = async (userEmail: string): Promise<SupportTicket[]> => {
+  const authToken = getAuthToken();
+  const response = await axios.get(
+    `${API_BASE_URL}/user/support/tickets/${encodeURIComponent(userEmail.trim())}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      },
+      withCredentials: true,
+    }
+  );
+
+  const payload = response.data;
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+  return [];
+};
