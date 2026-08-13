@@ -77,7 +77,8 @@ function FixedDepositsSummarySection({
 }: FixedDepositsSummarySectionProps) {
   const [selectedEntry, setSelectedEntry] = useState<FixedDepositEntry | null>(null);
   const [isVisible, setIsVisible] = useState(true);
-  const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
+  const activeEntries = entries.filter((entry) => entry.active);
+  const totalAmount = activeEntries.reduce((sum, item) => sum + item.amount, 0);
 
   const columns: TableColumn<FixedDepositEntry>[] = [
     {
@@ -186,7 +187,7 @@ function FixedDepositsSummarySection({
             <h3>{error}</h3>
           </div>
         </div>
-      ) : entries.length === 0 ? (
+      ) : activeEntries.length === 0 ? (
         <div className="fd-empty-state">
           <div className="fd-empty-state-content">
             <div className="fd-empty-icon">🏦</div>
@@ -209,7 +210,7 @@ function FixedDepositsSummarySection({
           <div className="table-wrapper">
             <DataTable
               columns={columns}
-              data={entries}
+              data={activeEntries}
               pagination
               paginationPerPage={6}
               paginationRowsPerPageOptions={[6, 10, 15]}
