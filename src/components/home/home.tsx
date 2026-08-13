@@ -396,7 +396,7 @@ export default function Homepage() {
       setForgotPasswordError(null);
       setForgotPasswordMessage(null);
       const authToken = getAuthToken();
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/wealth-plus/api"}/update/forgotPassword`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/koshmitra/api"}/update/forgotPassword`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
