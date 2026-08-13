@@ -1,26 +1,31 @@
 .breadcrumb {
-  padding: 0 24px 4px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  padding: 10px var(--app-gutter) 0;
   position: relative;
   z-index: 1;
-  background: #fff;
+  background: #f8fafc;
 }
 
 .breadcrumb-content {
-  max-width: 1400px;
+  width: min(100%, var(--app-content-width));
+  max-width: var(--app-content-width);
   margin: 0 auto;
-  width: 100%;
   position: relative;
   z-index: 1;
+  border-bottom: 1px solid #dbe3ef;
 }
 
 .breadcrumb ol {
   margin: 0;
-  padding: 10px 16px;
+  padding: 0 4px 9px;
   list-style: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .breadcrumb li {
@@ -31,30 +36,30 @@
 }
 
 .breadcrumb a {
-  color: #1d4ed8;
+  color: #475569;
   font-weight: 600;
   text-decoration: none;
 }
 
 .breadcrumb a:hover {
-  text-decoration: underline;
+  color: #1d4ed8;
 }
 
 .breadcrumb-separator {
-  color: #94a3b8;
+  color: #a8b3c2;
 }
 
 .breadcrumb-current {
-  color: #0f172a;
+  color: #64748b;
   font-weight: 700;
 }
 
 @media (max-width: 640px) {
   .breadcrumb {
-    padding: 0 12px 4px;
+    padding: 8px 12px 0;
   }
 
   .breadcrumb ol {
-    padding: 8px 12px;
+    padding: 0 2px 8px;
   }
 }

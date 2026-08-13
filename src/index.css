@@ -9,6 +9,8 @@
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-muted: #475569;
+  --app-content-width: 1400px;
+  --app-gutter: 18px;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
