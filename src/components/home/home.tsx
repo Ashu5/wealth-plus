@@ -2,10 +2,10 @@ import { useState, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import "./home.css";
-import logo from "../../assets/logo_big.png";
+import logo from "../../assets/koshmitra-logo.svg";
 import UserRegistration from "../register/user-registration";
-import { assignUsername, googleLogin, login, profileDetails, registerUser, ssoLogin, trackLogoutActivity } from "../../services/user-service";
-import { getAuthToken, setAuthToken } from "../../services/auth-token";
+import { assignUsername, googleLogin, login, profileDetails, refreshAccessToken, registerUser, ssoLogin, trackLogoutActivity } from "../../services/user-service";
+import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "../../services/auth-token";
 
 function GoogleMark() {
   return (
@@ -121,7 +121,57 @@ export default function Homepage() {
     }
 
     const responseRecord = response as Record<string, unknown>;
-    return extractTokenFromPayload(responseRecord.data);
+    return extractTokenFromPayload(responseRecord.data) ?? extractTokenFromPayload(responseRecord);
+  };
+
+  const extractRefreshTokenFromPayload = (payload: unknown, depth = 0): string | null => {
+    if (depth > 6 || !payload) {
+      return null;
+    }
+
+    if (Array.isArray(payload)) {
+      for (const item of payload) {
+        const token = extractRefreshTokenFromPayload(item, depth + 1);
+        if (token) {
+          return token;
+        }
+      }
+      return null;
+    }
+
+    if (typeof payload !== "object") {
+      return null;
+    }
+
+    const record = payload as Record<string, unknown>;
+    const refreshTokenKeys = ["refreshToken", "refresh_token", "refresh-token", "refreshTokenValue", "refreshTokenString"];
+
+    for (const key of refreshTokenKeys) {
+      if (record[key] !== undefined) {
+        const token = extractTokenValue(record[key], true);
+        if (token) {
+          return token;
+        }
+      }
+    }
+
+    if (record.data !== undefined) {
+      const nestedToken = extractRefreshTokenFromPayload(record.data, depth + 1);
+      if (nestedToken) {
+        return nestedToken;
+      }
+    }
+
+    return null;
+  };
+
+  const extractRefreshTokenFromResponse = (response: unknown): string | null => {
+    if (!response || typeof response !== "object") {
+      return null;
+    }
+
+    const responseRecord = response as Record<string, unknown>;
+    return extractRefreshTokenFromPayload(responseRecord.data) ?? extractRefreshTokenFromPayload(responseRecord);
   };
 
   const resolveUsernameFromPayload = (payload: unknown): string => {
@@ -235,12 +285,30 @@ export default function Homepage() {
 
     if (statusCode === 200 && !alreadyLoggedIn) {
       const authToken = extractAuthTokenFromResponse(response);
+      const refreshToken = extractRefreshTokenFromResponse(response) ?? getRefreshToken();
+
       if (!authToken) {
         setSignInError("Login succeeded but no authorization token was returned. Please try again.");
         return false;
       }
 
       setAuthToken(authToken);
+
+      if (refreshToken) {
+        setRefreshToken(refreshToken);
+
+        try {
+          const refreshedSession = await refreshAccessToken(authToken, refreshToken);
+          const refreshedAuthToken = extractAuthTokenFromResponse(refreshedSession);
+
+          if (refreshedAuthToken) {
+            setAuthToken(refreshedAuthToken);
+          }
+        } catch (error) {
+          console.warn("Unable to refresh access token after login:", error);
+        }
+      }
+
       persistAuthenticatedUser(emailValue, userPayload, sessionIdFromPayload);
       setPendingSessionId(null);
       navigate("/dashboard", { replace: true, state: { fromApp: true } });
@@ -328,7 +396,7 @@ export default function Homepage() {
       setForgotPasswordError(null);
       setForgotPasswordMessage(null);
       const authToken = getAuthToken();
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/wealth-plus/api"}/update/forgotPassword`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/koshmitra/api"}/update/forgotPassword`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

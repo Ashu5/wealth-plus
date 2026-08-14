@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/koshmitra/api').replace(/\/$/, '');
 
 export type AdminRole = 'READ_ONLY' | 'CAN_EDIT' | 'DELETE';
 
@@ -75,13 +75,3 @@ export const forceLogoutUser = async (email: string) => {
   return response.data;
 };
 
-export const sendContactMessage = async (payload: { name: string; email: string; message: string }) => {
-  const response = await axios.post(`${API_BASE_URL}/admin/contact`, payload, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    withCredentials: true,
-  });
-
-  return response.data;
-};

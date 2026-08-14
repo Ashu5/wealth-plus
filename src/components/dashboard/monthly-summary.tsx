@@ -4,7 +4,7 @@ type MonthlySummaryProps = {
   periodLabel: string;
 };
 
-function MonthlySummary({ mutualFundContribution, fixedDepositContribution, periodLabel }: MonthlySummaryProps) {
+function MonthlySummary({ mutualFundContribution, fixedDepositContribution }: MonthlySummaryProps) {
   const totalContribution = mutualFundContribution + fixedDepositContribution;
 
   return (
@@ -12,7 +12,6 @@ function MonthlySummary({ mutualFundContribution, fixedDepositContribution, peri
       <div className="summary-header">
         <div>
           <p className="eyebrow">Monthly Contribution</p>
-          <h2>{periodLabel}</h2>
         </div>
         <span className="pill pill-success">₹{totalContribution.toLocaleString()}</span>
       </div>

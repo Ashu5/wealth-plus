@@ -1,0 +1,233 @@
+.liabilities-section {
+  margin-top: 20px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  padding: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.liabilities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.liabilities-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.liabilities-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.add-liability-btn {
+  border: 1px solid #c7d2fe;
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-liability-btn:hover {
+  background: rgba(99, 102, 241, 0.14);
+  transform: translateY(-1px);
+}
+
+.liabilities-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.liabilities-total strong {
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.liability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, max-content));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.liability-flip-card {
+  position: relative;
+  display: block;
+  width: 220px;
+  min-height: 88px;
+  height: 100%;
+  border: 1px solid #e2e8f0;
+  background: transparent;
+  padding: 0;
+  border-radius: 16px;
+  cursor: pointer;
+  perspective: 1000px;
+  text-align: left;
+  box-shadow: none;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.liability-edit-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #475569;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.liability-edit-btn:hover {
+  background: #ffffff;
+  border-color: #94a3b8;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.liability-edit-btn svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  pointer-events: none;
+}
+
+.liability-flipper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 88px;
+  transition: transform 0.6s ease;
+  transform-style: preserve-3d;
+}
+
+.liability-flip-card.is-flipped .liability-flipper {
+  transform: rotateY(180deg);
+}
+
+.liability-face {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f5f7ff 100%);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.liability-front {
+  z-index: 2;
+}
+
+.liability-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.liability-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.12);
+  display: grid;
+  place-items: center;
+  color: #4f46e5;
+  flex-shrink: 0;
+}
+
+.liability-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.liability-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.liability-name {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.liability-amount {
+  font-size: 18px;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.liability-back-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.liability-back-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #475569;
+  font-weight: 700;
+}
+
+.liability-back-list {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+}
+
+.liability-back-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: #475569;
+}
+
+.liability-back-list div strong {
+  color: #0f172a;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 700;
+}
