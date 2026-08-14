@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAuthToken } from './auth-token';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/koshmitra/api').replace(/\/$/, '');
 
 export interface FixedDepositApiEntry {
   id: string;

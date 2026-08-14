@@ -50,7 +50,6 @@ function PortfolioSummarySection({
   fundTypeOptions,
   isLoading = false,
   error = null,
-  title = 'Portfolio Summary',
   eyebrow = 'Portfolio Details',
 }: PortfolioSummarySectionProps) {
   const [isVisible, setIsVisible] = useState(true);
@@ -65,7 +64,6 @@ function PortfolioSummarySection({
       <div className="table-header">
         <div>
           <p className="eyebrow">{eyebrow}</p>
-          <h2>{title}</h2>
         </div>
         <div className="summary-actions">
           <button

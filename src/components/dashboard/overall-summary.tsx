@@ -24,7 +24,6 @@ function OverallSummary({ totalInvestment, totalCurrentValue, totalLiabilities, 
       <div className="summary-header">
         <div>
           <p className="eyebrow">Overall Summary</p>
-          <h2>Lifetime Performance</h2>
         </div>
         <div className="summary-actions">
           <button

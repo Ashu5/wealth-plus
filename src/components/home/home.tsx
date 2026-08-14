@@ -2,7 +2,7 @@ import { useState, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import "./home.css";
-import logo from "../../assets/logo_big.png";
+import logo from "../../assets/koshmitra-logo.svg";
 import UserRegistration from "../register/user-registration";
 import { assignUsername, googleLogin, login, profileDetails, refreshAccessToken, registerUser, ssoLogin, trackLogoutActivity } from "../../services/user-service";
 import { getAuthToken, getRefreshToken, setAuthToken, setRefreshToken } from "../../services/auth-token";
@@ -396,7 +396,7 @@ export default function Homepage() {
       setForgotPasswordError(null);
       setForgotPasswordMessage(null);
       const authToken = getAuthToken();
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/wealth-plus/api"}/update/forgotPassword`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/koshmitra/api"}/update/forgotPassword`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

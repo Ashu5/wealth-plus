@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const AUTH_TOKEN_STORAGE_KEY = 'wealth-plus-jwt-token';
 export const REFRESH_TOKEN_STORAGE_KEY = 'wealth-plus-refresh-token';
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/koshmitra/api').replace(/\/$/, '');
 
 
 const normalizeAuthToken = (value: unknown): string | null => {

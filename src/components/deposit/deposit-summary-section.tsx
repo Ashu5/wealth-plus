@@ -154,7 +154,6 @@ function FixedDepositsSummarySection({
       <div className="table-header fd-header-shell">
         <div>
           <p className="eyebrow">Fixed Deposits</p>
-          <h2>FD Summary</h2>
         </div>
         <div className="summary-actions">
           <button

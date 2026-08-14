@@ -235,7 +235,7 @@ function UserRegistration({ onSwitchToLogin, onRegistrationSuccess }: UserRegist
         )}
       </label>
 
-      <button type="submit" className="btn-primary" disabled={isSubmitting || !isFormValid}>
+      <button type="submit" className="btn-primary" disabled={isSubmitting}>
         {isSubmitting ? 'Creating account...' : 'Create account'}
         <ArrowUpRight className="icon-sm" />
       </button>

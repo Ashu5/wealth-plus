@@ -538,7 +538,6 @@ function MyFundsPage() {
         <div className="my-funds-header">
           <div>
             <p className="eyebrow">My Funds</p>
-            <h2>All funds added by you</h2>
           </div>
           <div className="my-funds-actions">
             <button type="button" className="add-fund-btn" onClick={() => setIsAddFundFormOpen(true)}>
@@ -587,7 +586,6 @@ function MyFundsPage() {
         <div className="my-funds-header">
           <div>
             <p className="eyebrow">My Fixed Deposits</p>
-            <h2>All fixed deposits added by you</h2>
           </div>
           <div className="my-funds-actions">
             <span className="pill">{fixedDeposits.length} fixed deposits</span>

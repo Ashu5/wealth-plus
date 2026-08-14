@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Lock, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import { resetPassword } from "../../services/user-service";
-import logo from "../../assets/logo_big.png";
+import logo from "../../assets/koshmitra-logo.svg";
 import "./reset-password.css";
 
 export default function ResetPasswordPage() {

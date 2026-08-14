@@ -1,7 +1,7 @@
 .dashboard-page {
   min-height: calc(100vh - 120px);
   background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-  padding: 16px 24px 24px;
+  padding: 8px var(--app-gutter) 20px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -12,11 +12,11 @@
 
 .dashboard-grid {
   width: 100%;
-  max-width: 1480px;
+  max-width: var(--app-content-width);
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
-  gap: 24px;
+  gap: 18px;
   align-items: start;
 }
 
