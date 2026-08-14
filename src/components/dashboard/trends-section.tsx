@@ -87,7 +87,6 @@ function TrendsSection({ portfolioEntries, fixedDepositEntries }: TrendsSectionP
       <div className="summary-header">
         <div>
           <p className="eyebrow">Trends</p>
-          <h2>Performance overview</h2>
         </div>
       </div>
 

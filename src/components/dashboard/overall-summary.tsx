@@ -3,11 +3,12 @@ import { useState } from 'react';
 type OverallSummaryProps = {
   totalInvestment: number;
   totalCurrentValue: number;
+  totalLiabilities: number;
   totalGainLoss: number;
   gainLossPercentage: number;
 };
 
-function OverallSummary({ totalInvestment, totalCurrentValue, totalGainLoss, gainLossPercentage }: OverallSummaryProps) {
+function OverallSummary({ totalInvestment, totalCurrentValue, totalLiabilities, totalGainLoss, gainLossPercentage }: OverallSummaryProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   const renderAmount = (value: number) => {
@@ -23,7 +24,6 @@ function OverallSummary({ totalInvestment, totalCurrentValue, totalGainLoss, gai
       <div className="summary-header">
         <div>
           <p className="eyebrow">Overall Summary</p>
-          <h2>Lifetime Performance</h2>
         </div>
         <div className="summary-actions">
           <button
@@ -40,11 +40,15 @@ function OverallSummary({ totalInvestment, totalCurrentValue, totalGainLoss, gai
 
       <div className="summary-grid overall-summary-grid">
         <div className="summary-item">
-          <span className="stat-label">Total Investment</span>
+          <span className="stat-label">Total Investment - Liabilities</span>
           <strong>{renderAmount(totalInvestment)}</strong>
         </div>
         <div className="summary-item">
-          <span className="stat-label">All Time Return</span>
+          <span className="stat-label">Liabilities</span>
+          <strong>{renderAmount(totalLiabilities)}</strong>
+        </div>
+        <div className="summary-item">
+          <span className="stat-label">Net Portfolio Value</span>
           <strong>{renderAmount(totalCurrentValue)}</strong>
         </div>
         <div className="summary-item">

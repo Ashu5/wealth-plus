@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getAuthToken } from './auth-token';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/koshmitra/api').replace(/\/$/, '');
 
 
 export const addFund = async (fundData:any) => {
@@ -171,9 +171,9 @@ export const addFixedDeposit = async (fixedDepositData: any) => {
     }
 };
 
-export const getUserFixedDeposits = async (userName: string) => {
+export const getUserFixedDeposits = async (userEmail: string) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/fixedDeposit/user/${encodeURIComponent(userName)}`);
+        const response = await axios.get(`${API_BASE_URL}/fixedDeposit/user/${encodeURIComponent(userEmail)}`);
         return response.data;
     } catch (error) {
         console.error("Error fetching user fixed deposits:", error);

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './header.css';
-import logo from '../../assets/wealth_plus.png';
+import logo from '../../assets/koshmitra-logo.svg';
 import ProfileComponent from '../profile/profile';
 
 function Header() {
@@ -48,7 +48,7 @@ function Header() {
   return (
     <header className="header">
       <div className="header-content">
-        <img src={logo} alt="Wealth Plus Logo" className="header-logo" />
+        <img src={logo} alt="Koshmitra Logo" className="header-logo" />
         <div className="header-actions" ref={menuRef}>
           <div className="header-menu-wrap">
             <button

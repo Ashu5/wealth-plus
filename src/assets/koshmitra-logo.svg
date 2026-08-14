@@ -1,0 +1,39 @@
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5B942"/>
+      <stop offset="100%" stop-color="#D98E1E"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0F5C52"/>
+      <stop offset="100%" stop-color="#12836F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon group -->
+  <g transform="translate(20,20)">
+    <!-- Outer vault-ring -->
+    <circle cx="80" cy="80" r="76" fill="none" stroke="url(#ringGrad)" stroke-width="10"/>
+
+    <!-- Inner coin -->
+    <circle cx="80" cy="80" r="54" fill="url(#coinGrad)"/>
+
+    <!-- Rupee symbol -->
+    <text x="80" y="102" font-family="Georgia, 'Noto Serif Devanagari', serif" font-size="62"
+          font-weight="700" fill="#0F5C52" text-anchor="middle">₹</text>
+
+    <!-- Growth tick, breaking the ring at top-right like an ascending arrow -->
+    <path d="M124 44 L146 22 M146 22 L146 40 M146 22 L128 22"
+          fill="none" stroke="#0F5C52" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(220,0)">
+    <text x="0" y="95" font-family="'Poppins', 'Segoe UI', sans-serif" font-size="56" font-weight="600" fill="#0F5C52">
+      Kosh<tspan fill="#D98E1E">Mitra</tspan>
+    </text>
+    <text x="2" y="128" font-family="'Segoe UI', sans-serif" font-size="19" letter-spacing="2" fill="#5B7370">
+      YOUR WEALTH, YOUR MITRA
+    </text>
+  </g>
+</svg>

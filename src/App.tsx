@@ -13,6 +13,7 @@ import Breadcrumb from './components/breadcrumb/breadcrumb';
 import ContactPage from './components/contact/contact-page';
 import ProfileDetails from './components/profile/profile-details';
 import MyReportsPage from './components/profile/my-reports';
+import EWalletPage from './components/profile/e-wallet-page';
 import { searchUsers } from './services/admin-service';
 import { clearAuthToken } from './services/auth-token';
 
@@ -317,6 +318,19 @@ function AppShell() {
                 <Header />
                 <Breadcrumb />
                 <MyReportsPage />
+                <Footer />
+              </>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/e-wallet"
+          element={
+            <ProtectedRoute>
+              <>
+                <Header />
+                <Breadcrumb />
+                <EWalletPage />
                 <Footer />
               </>
             </ProtectedRoute>

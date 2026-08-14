@@ -4,7 +4,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
 import { getAuthToken } from './auth-token';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/wealth-plus/api').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/koshmitra/api').replace(/\/$/, '');
 console.log('API base URL:', import.meta.env.VITE_API_BASE_URL);
 
 const provider = new GoogleAuthProvider();
@@ -194,6 +194,27 @@ export const ssoLogin = async (firebaseToken: string) => {
   return response;
 };
 
+export const refreshAccessToken = async (accessToken: string, refreshToken: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/activity/refreshToken`,
+      { refreshToken },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      }
+    );
+
+    return response;
+  } catch (error) {
+    console.error('Error refreshing access token:', error);
+    throw error;
+  }
+};
+
 export const resetPassword = async (token: string, newPassword: string) => {
   try {
     const response = await axios.post(
@@ -211,4 +232,55 @@ export const resetPassword = async (token: string, newPassword: string) => {
     console.error('Error resetting password:', error);
     throw error;
   }
+};
+
+export const sendContactMessage = async (payload: { name: string; email: string; message: string }) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/user/support`, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    });
+
+    return response.data;
+  } catch (error) {
+    // Backend returns 400 with the existing ticket info when a support request is already open.
+    if (axios.isAxiosError(error) && error.response) {
+      return error.response.data;
+    }
+
+    throw error;
+  }
+};
+
+export type SupportTicket = {
+  serviceId?: string;
+  createdAt?: string;
+  status?: string;
+  message?: string;
+  [key: string]: unknown;
+};
+
+export const fetchSupportTickets = async (userEmail: string): Promise<SupportTicket[]> => {
+  const authToken = getAuthToken();
+  const response = await axios.get(
+    `${API_BASE_URL}/user/support/tickets/${encodeURIComponent(userEmail.trim())}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      },
+      withCredentials: true,
+    }
+  );
+
+  const payload = response.data;
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+  return [];
 };

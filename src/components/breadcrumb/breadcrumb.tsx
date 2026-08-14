@@ -13,6 +13,7 @@ const labelMap: Record<string, string> = {
   'fund-transactions': 'Fund Transactions',
   profile: 'Profile',
   'my-reports': 'My Reports',
+  'e-wallet': 'eWallet',
   contact: 'Contact',
   admin: 'Admin',
 };
@@ -36,32 +37,20 @@ const Breadcrumb = () => {
     };
   });
 
+  const currentCrumb = crumbs[crumbs.length - 1];
+
+  if (!currentCrumb || currentCrumb.to === '/dashboard') {
+    return null;
+  }
+
   return (
-    <nav className="breadcrumb" aria-label="Breadcrumb">
+    <nav className="breadcrumb" aria-label="Page context">
       <div className="breadcrumb-content">
-        <ol>
-          <li>
-            <Link to="/dashboard" state={{ fromApp: true }}>Dashboard</Link>
-          </li>
-          {crumbs.map((crumb, index) => {
-            const isLast = index === crumbs.length - 1;
-
-            if (crumb.to === '/dashboard') {
-              return null;
-            }
-
-            return (
-              <li key={crumb.to}>
-                <span className="breadcrumb-separator">/</span>
-                {isLast ? (
-                  <span className="breadcrumb-current" aria-current="page">{crumb.label}</span>
-                ) : (
-                  <Link to={crumb.to} state={{ fromApp: true }}>{crumb.label}</Link>
-                )}
-              </li>
-            );
-          })}
-        </ol>
+        <Link className="breadcrumb-back" to="/dashboard" state={{ fromApp: true }}>
+          <span aria-hidden="true">&#8592;</span>
+          <span>Back to Dashboard</span>
+        </Link>
+        <span className="breadcrumb-current" aria-current="page">{currentCrumb.label}</span>
       </div>
     </nav>
   );

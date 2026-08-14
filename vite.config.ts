@@ -8,13 +8,13 @@ export default defineConfig({
   server: {
     proxy: {
       '/user/sigin': {
-        target: 'http://localhost:8080/wealth-plus/api/user',
+        target: 'http://localhost:8080/koshmitra/api/user',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/auth/, ''),
       },
-      '/wealth-plus': {
-        target: 'http://localhost:8080/wealth-plus',
+      '/koshmitra': {
+        target: 'http://localhost:8080/koshmitra',
         changeOrigin: true,
         secure: false,
       },
