@@ -199,3 +199,54 @@ export const addFundV2 = async (fundData:any) => {
         throw error;
     }
 };
+
+export const getPlatformDetailsByCurrency = async (currency: string) => {
+    try {
+        const token = getAuthToken();
+        const response = await axios.get(
+            `${API_BASE_URL}/platforms/by-currency/${encodeURIComponent(currency)}`,
+            {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                withCredentials: true,
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching platform details by currency:', error);
+        throw error;
+    }
+};
+
+export type AddPlatformPayload = {
+    platformByCurrency: string;
+    platform: {
+        platformName: string;
+        platformCode: string;
+        platformDescription: string;
+        currency: string;
+    };
+};
+
+export const addPlatform = async (currency: string, payload: AddPlatformPayload) => {
+    try {
+        const token = getAuthToken();
+        const response = await axios.post(
+            `${API_BASE_URL}/platforms/add`,
+            payload,
+            {
+                params: { currency },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                withCredentials: true,
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error('Error adding platform:', error);
+        throw error;
+    }
+};

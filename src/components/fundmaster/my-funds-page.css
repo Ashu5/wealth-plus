@@ -204,6 +204,46 @@
   font-size: 14px;
 }
 
+.platform-field-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.platform-field-row select {
+  flex: 1;
+}
+
+.add-platform-btn {
+  border: 1px solid #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.add-platform-inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px dashed #c7d2fe;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.add-platform-inline-form input {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

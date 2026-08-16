@@ -1,7 +1,8 @@
+import axios from 'axios';
 import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import '../fundmaster/my-funds-page.css';
 import MatchingFundsSuggestions from './matching-funds-suggestions';
-import { addFundV2, generateFundCodeV2, getMatchingFunds } from '../../services/fund-service';
+import { addFundV2, addPlatform, generateFundCodeV2, getMatchingFunds, getPlatformDetailsByCurrency } from '../../services/fund-service';
 
 type AddFundMasterModalProps = {
   isOpen?: boolean;
@@ -15,6 +16,18 @@ type MatchingFundSuggestion = {
   label: string;
   schemeCode?: string;
   fundName?: string;
+};
+
+type PlatformDetail = {
+  platformName: string;
+  platformCode: string;
+  platformDescription: string;
+};
+
+const OTHERS_PLATFORM: PlatformDetail = {
+  platformName: 'Others',
+  platformCode: 'OT-01',
+  platformDescription: 'Others',
 };
 
 const storedUser = localStorage.getItem('wealth-plus-username')?.trim() || localStorage.getItem('wealth-plus-email')?.trim();
@@ -49,7 +62,7 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
     fundAmount: '',
     folioNumber: '',
     currency: 'INR',
-    platform: 'Groww',
+    platform: 'Others',
     userName: storedUser || '',
     userEmail: localStorage.getItem('wealth-plus-email')?.trim() || '',
   });
@@ -61,6 +74,12 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
   const [matchingFundsError, setMatchingFundsError] = useState('');
   const [isMatchingFundsLoading, setIsMatchingFundsLoading] = useState(false);
   const [generatedFor, setGeneratedFor] = useState({ fundName: '', fundType: '', folioPrefix: '' });
+  const [platformDetails, setPlatformDetails] = useState<PlatformDetail[]>([OTHERS_PLATFORM]);
+  const [isPlatformLoading, setIsPlatformLoading] = useState(false);
+  const [isAddPlatformOpen, setIsAddPlatformOpen] = useState(false);
+  const [newPlatform, setNewPlatform] = useState({ platformName: '', platformCode: '', platformDescription: '' });
+  const [isAddingPlatform, setIsAddingPlatform] = useState(false);
+  const [addPlatformError, setAddPlatformError] = useState('');
   const matchingFundsRequestIdRef = useRef(0);
 
   const { fundName, fundType, folioNumber } = fundMasterData;
@@ -233,6 +252,144 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
     }
   };
 
+  // Normalizes a single platform-shaped object (possibly nested under "data"/"platform") into a PlatformDetail.
+  const toPlatformDetail = (candidate: unknown): PlatformDetail | null => {
+    if (!candidate || typeof candidate !== 'object') {
+      return null;
+    }
+
+    const normalized = candidate as Record<string, unknown>;
+    const nestedData = normalized.data && typeof normalized.data === 'object'
+      ? normalized.data as Record<string, unknown>
+      : normalized;
+
+    if (nestedData.platform && typeof nestedData.platform === 'object') {
+      return toPlatformDetail(nestedData.platform);
+    }
+
+    const platformName = typeof nestedData.platformName === 'string' && nestedData.platformName.trim()
+      ? nestedData.platformName.trim()
+      : typeof nestedData.name === 'string' && nestedData.name.trim()
+        ? nestedData.name.trim()
+        : typeof nestedData.platform === 'string' && nestedData.platform.trim()
+          ? nestedData.platform.trim()
+          : '';
+
+    if (!platformName) {
+      return null;
+    }
+
+    const platformCode = typeof nestedData.platformCode === 'string' && nestedData.platformCode.trim()
+      ? nestedData.platformCode.trim()
+      : platformName;
+
+    const platformDescription = typeof nestedData.platformDescription === 'string' && nestedData.platformDescription.trim()
+      ? nestedData.platformDescription.trim()
+      : platformName;
+
+    return { platformName, platformCode, platformDescription };
+  };
+
+  // Unwraps envelopes (arrays, Spring Page.content, single object) into a flat list of platform details.
+  const extractPlatformDetails = (responseData: unknown): PlatformDetail[] => {
+    const items = Array.isArray(responseData)
+      ? responseData
+      : responseData && typeof responseData === 'object' && Array.isArray((responseData as Record<string, unknown>).data)
+        ? (responseData as Record<string, unknown>).data as unknown[]
+        : responseData && typeof responseData === 'object' && Array.isArray((responseData as Record<string, unknown>).content)
+          ? (responseData as Record<string, unknown>).content as unknown[]
+          : responseData
+            ? [responseData]
+            : [];
+
+    const details = items
+      .map((item) => toPlatformDetail(item))
+      .filter((item): item is PlatformDetail => item !== null);
+
+    const uniqueByName = new Map(details.map((detail) => [detail.platformName, detail]));
+    return [...uniqueByName.values()];
+  };
+
+  const fetchPlatformByCurrency = async (currency: string) => {
+    if (!currency) {
+      setPlatformDetails([OTHERS_PLATFORM]);
+      setFundMasterData((prev) => ({ ...prev, platform: OTHERS_PLATFORM.platformName }));
+      return;
+    }
+
+    setIsPlatformLoading(true);
+
+    try {
+      const response = await getPlatformDetailsByCurrency(currency);
+      const details = extractPlatformDetails(response ?? null);
+      const resolvedDetails = details.length > 0 ? details : [OTHERS_PLATFORM];
+
+      setPlatformDetails(resolvedDetails);
+      setFundMasterData((prev) => ({ ...prev, platform: resolvedDetails[0].platformName }));
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        setPlatformDetails([OTHERS_PLATFORM]);
+        setFundMasterData((prev) => ({ ...prev, platform: OTHERS_PLATFORM.platformName }));
+        return;
+      }
+
+      console.error('Unable to fetch platform by currency:', error);
+      setPlatformDetails([OTHERS_PLATFORM]);
+      setFundMasterData((prev) => ({ ...prev, platform: OTHERS_PLATFORM.platformName }));
+    } finally {
+      setIsPlatformLoading(false);
+    }
+  };
+
+  const handleNewPlatformChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewPlatform((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleToggleAddPlatform = () => {
+    setIsAddPlatformOpen((prev) => !prev);
+    setAddPlatformError('');
+    setNewPlatform({ platformName: '', platformCode: '', platformDescription: '' });
+  };
+
+  const handleAddPlatformSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    const platformName = newPlatform.platformName.trim();
+    const platformCode = newPlatform.platformCode.trim();
+    const platformDescription = newPlatform.platformDescription.trim() || platformName;
+
+    if (!platformName || !platformCode) {
+      setAddPlatformError('Platform name and code are required.');
+      return;
+    }
+
+    const currency = fundMasterData.currency;
+    setIsAddingPlatform(true);
+    setAddPlatformError('');
+
+    try {
+      await addPlatform(currency, {
+        platformByCurrency: currency,
+        platform: { platformName, platformCode, platformDescription, currency },
+      });
+
+      const addedPlatform: PlatformDetail = { platformName, platformCode, platformDescription };
+      setPlatformDetails((prev) => {
+        const withoutDuplicate = prev.filter((detail) => detail.platformName !== platformName);
+        return [...withoutDuplicate, addedPlatform];
+      });
+      setFundMasterData((prev) => ({ ...prev, platform: platformName }));
+      setIsAddPlatformOpen(false);
+      setNewPlatform({ platformName: '', platformCode: '', platformDescription: '' });
+    } catch (error) {
+      console.error('Unable to add platform:', error);
+      setAddPlatformError('Unable to add platform. Please try again.');
+    } finally {
+      setIsAddingPlatform(false);
+    }
+  };
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const shouldClearCode = name === 'fundName';
@@ -247,10 +404,16 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
       setGeneratedFor({ fundName: '', fundType: '', folioPrefix: '' });
       setCodeError('');
     }
+
+    if (name === 'currency') {
+      void fetchPlatformByCurrency(value);
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    const selectedPlatform = platformDetails.find((detail) => detail.platformName === fundMasterData.platform) ?? OTHERS_PLATFORM;
 
     const fundPayload = {
       fundName: fundMasterData.fundName,
@@ -260,9 +423,9 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
       fundAmount: fundMasterData.fundAmount,
       currency: fundMasterData.currency,
       platform: {
-        platformCode: fundMasterData.platform === 'Groww' ? '01' : fundMasterData.platform === 'Coin' ? '02' : '03',
-        platformName: fundMasterData.platform,
-        platformDescription: `${fundMasterData.platform} Platform`,
+        platformCode: selectedPlatform.platformCode,
+        platformName: selectedPlatform.platformName,
+        platformDescription: selectedPlatform.platformDescription,
       },
       userName: fundMasterData.userName,
       userEmail: fundMasterData.userEmail,
@@ -393,11 +556,46 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
 
           <div className="field-group">
             <label htmlFor="platform">Platform</label>
-            <select id="platform" name="platform" value={fundMasterData.platform} onChange={handleChange}>
-              <option value="Groww">Groww</option>
-              <option value="Coin">Coin</option>
-              <option value="Smallcase">Smallcase</option>
-            </select>
+            <div className="platform-field-row">
+              <select id="platform" name="platform" value={fundMasterData.platform} onChange={handleChange} disabled={isPlatformLoading}>
+                {platformDetails.map((detail) => (
+                  <option key={detail.platformCode} value={detail.platformName}>{detail.platformName}</option>
+                ))}
+              </select>
+              <button type="button" className="add-platform-btn" onClick={handleToggleAddPlatform}>
+                {isAddPlatformOpen ? 'Cancel' : '+ Add Platform'}
+              </button>
+            </div>
+
+            {isAddPlatformOpen && (
+              <div className="add-platform-inline-form">
+                <input
+                  name="platformName"
+                  type="text"
+                  value={newPlatform.platformName}
+                  onChange={handleNewPlatformChange}
+                  placeholder="Platform Name"
+                />
+                <input
+                  name="platformCode"
+                  type="text"
+                  value={newPlatform.platformCode}
+                  onChange={handleNewPlatformChange}
+                  placeholder="Platform Code"
+                />
+                <input
+                  name="platformDescription"
+                  type="text"
+                  value={newPlatform.platformDescription}
+                  onChange={handleNewPlatformChange}
+                  placeholder="Platform Description"
+                />
+                {addPlatformError && <p className="field-error">{addPlatformError}</p>}
+                <button type="button" className="save-btn" onClick={handleAddPlatformSubmit} disabled={isAddingPlatform}>
+                  {isAddingPlatform ? 'Saving...' : 'Save Platform'}
+                </button>
+              </div>
+            )}
           </div>
 
           {successMessage && (
@@ -530,11 +728,46 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
 
           <div className="field-group">
             <label htmlFor="platform">Platform</label>
-            <select id="platform" name="platform" value={fundMasterData.platform} onChange={handleChange}>
-              <option value="Groww">Groww</option>
-              <option value="Coin">Coin</option>
-              <option value="Smallcase">Smallcase</option>
-            </select>
+            <div className="platform-field-row">
+              <select id="platform" name="platform" value={fundMasterData.platform} onChange={handleChange} disabled={isPlatformLoading}>
+                {platformDetails.map((detail) => (
+                  <option key={detail.platformCode} value={detail.platformName}>{detail.platformName}</option>
+                ))}
+              </select>
+              <button type="button" className="add-platform-btn" onClick={handleToggleAddPlatform}>
+                {isAddPlatformOpen ? 'Cancel' : '+ Add Platform'}
+              </button>
+            </div>
+
+            {isAddPlatformOpen && (
+              <div className="add-platform-inline-form">
+                <input
+                  name="platformName"
+                  type="text"
+                  value={newPlatform.platformName}
+                  onChange={handleNewPlatformChange}
+                  placeholder="Platform Name"
+                />
+                <input
+                  name="platformCode"
+                  type="text"
+                  value={newPlatform.platformCode}
+                  onChange={handleNewPlatformChange}
+                  placeholder="Platform Code"
+                />
+                <input
+                  name="platformDescription"
+                  type="text"
+                  value={newPlatform.platformDescription}
+                  onChange={handleNewPlatformChange}
+                  placeholder="Platform Description"
+                />
+                {addPlatformError && <p className="field-error">{addPlatformError}</p>}
+                <button type="button" className="save-btn" onClick={handleAddPlatformSubmit} disabled={isAddingPlatform}>
+                  {isAddingPlatform ? 'Saving...' : 'Save Platform'}
+                </button>
+              </div>
+            )}
           </div>
 
           {successMessage && (
