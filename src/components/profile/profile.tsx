@@ -95,15 +95,9 @@ function ProfileComponent({ isMenuOpen, onMenuOpenChange }: ProfileComponentProp
         console.error('Error tracking logout activity:', error);
       }
     } finally {
-      sessionStorage.removeItem('wealth-plus-session-id');
-
-      localStorage.removeItem('wealth-plus-auth');
-      localStorage.removeItem('wealth-plus-username');
-      localStorage.removeItem('wealth-plus-email');
-      localStorage.removeItem('wealth-plus-full-name');
-      localStorage.removeItem('wealth-plus-last-login');
-      localStorage.removeItem('wealth-plus-password');
       clearAuthToken();
+      localStorage.clear();
+      sessionStorage.clear();
       onMenuOpenChange(false);
       navigate('/home', { replace: true });
     }

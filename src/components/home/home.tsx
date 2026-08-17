@@ -660,7 +660,7 @@ export default function Homepage() {
                     </div>
                   </label>
 
-                  <label className="field">
+                  <div className="field">
                     <div className="field-row">
                       <span className="field-label">Password</span>
                       <button
@@ -692,7 +692,7 @@ export default function Homepage() {
                         {showPassword ? <EyeOff className="icon-sm" /> : <Eye className="icon-sm" />}
                       </button>
                     </div>
-                  </label>
+                  </div>
 
                   <button type="submit" className="btn-primary" disabled={isSubmitting}>
                     {isSubmitting ? "Signing in..." : "Sign in"}
