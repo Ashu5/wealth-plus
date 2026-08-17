@@ -15,6 +15,10 @@ import AddGrowthModal from '../modal/add-growth-modal';
 import AddFDModal from '../modal/add-fd-modal';
 import PortfolioSummarySection from '../portfoliosummary/portfolio-summary-section';
 import RecentTransaction from '../recenttransaction/recent-transaction';
+import EWalletPage from '../profile/e-wallet-page';
+import MyJourneyPage from '../myjourney/my-journey-page';
+
+type DashboardTab = 'arthakosh' | 'vittkosh' | 'arthikkosh';
 
 const formatMonth = (value: string) => {
   const parsedDate = new Date(value);
@@ -155,6 +159,7 @@ const buildFixedDepositEntries = (payload: unknown): FixedDepositEntry[] => {
 };
 
 function Dashboard() {
+  const [activeTab, setActiveTab] = useState<DashboardTab>('arthakosh');
   const [portfolioEntries, setPortfolioEntries] = useState<PortfolioEntry[]>([]);
   const [fixedDepositEntries, setFixedDepositEntries] = useState<FixedDepositEntry[]>([]);
   const [portfolioSummaryEntries, setPortfolioSummaryEntries] = useState<PortfolioEntry[]>([]);
@@ -490,6 +495,46 @@ const handleSubmit = async (e: FormEvent) => {
 
   return (
     <main className="dashboard-page">
+      <div className="dashboard-tab-bar" role="tablist" aria-label="Dashboard sections">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'arthakosh'}
+          className={`dashboard-tab-btn ${activeTab === 'arthakosh' ? 'active' : ''}`}
+          onClick={() => setActiveTab('arthakosh')}
+        >
+          VittKosh
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'vittkosh'}
+          className={`dashboard-tab-btn ${activeTab === 'vittkosh' ? 'active' : ''}`}
+          onClick={() => setActiveTab('vittkosh')}
+        >
+          ArthaKosh
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'arthikkosh'}
+          className={`dashboard-tab-btn ${activeTab === 'arthikkosh' ? 'active' : ''}`}
+          onClick={() => setActiveTab('arthikkosh')}
+        >
+          ArthikKosh
+        </button>
+      </div>
+
+      {activeTab === 'vittkosh' ? (
+        <div className="dashboard-tab-panel">
+          <EWalletPage />
+        </div>
+      ) : activeTab === 'arthikkosh' ? (
+        <div className="dashboard-tab-panel">
+          <MyJourneyPage />
+        </div>
+      ) : (
+        <>
       {showSuccessModal && (
         <div className="success-modal-backdrop" role="dialog" aria-modal="true">
           <div className="success-modal-card">
@@ -594,6 +639,8 @@ const handleSubmit = async (e: FormEvent) => {
         isSubmitting={isSubmitting}
         errorMessage={modalError}
       />
+        </>
+      )}
     </main>
   );
 }

@@ -7,7 +7,47 @@
   box-sizing: border-box;
   overflow-x: hidden;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dashboard-tab-bar {
+  width: 100%;
+  max-width: var(--app-content-width);
+  display: flex;
+  gap: 8px;
+  margin: 0 auto 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dashboard-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.dashboard-tab-btn:hover {
+  color: #4f46e5;
+}
+
+.dashboard-tab-btn.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+}
+
+.dashboard-tab-panel {
+  width: 100%;
+  max-width: var(--app-content-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .dashboard-grid {

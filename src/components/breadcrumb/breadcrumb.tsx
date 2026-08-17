@@ -9,11 +9,9 @@ type Crumb = {
 const labelMap: Record<string, string> = {
   dashboard: 'Dashboard',
   'my-funds': 'My Funds',
-  'my-journey': 'My Journey',
   'fund-transactions': 'Fund Transactions',
   profile: 'Profile',
   'my-reports': 'My Reports',
-  'e-wallet': 'eWallet',
   contact: 'Contact',
   admin: 'Admin',
 };
