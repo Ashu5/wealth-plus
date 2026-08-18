@@ -19,6 +19,14 @@ const OTP_EXPIRY_MS = 2 * 60 * 1000;
 const TRUSTED_ACCESS_MS = 10 * 60 * 1000;
 const LOCKOUT_MS = 5 * 60 * 1000;
 
+// Call on logout so the next login requires eWallet OTP verification again.
+export const clearEWalletSession = () => {
+  sessionStorage.removeItem(TRUSTED_ACCESS_KEY);
+  sessionStorage.removeItem(OTP_EXPIRY_STORAGE_KEY);
+  sessionStorage.removeItem(OTP_ATTEMPTS_STORAGE_KEY);
+  sessionStorage.removeItem(LOCKED_UNTIL_STORAGE_KEY);
+};
+
 const getUserFullName = () => {
   const fullName = localStorage.getItem('wealth-plus-full-name')?.trim();
   if (fullName) {

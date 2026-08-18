@@ -169,9 +169,7 @@ function FixedDepositsSummarySection({
       </div>
 
       <div className="fd-center-action">
-        <button type="button" className="fd-action-pill" onClick={onAddFD}>
-          <span className="fd-action-icon">＋</span>
-          <span>Track FD</span>
+        <button type="button" className="fd-add-btn" onClick={onAddFD}>＋ Track FD 
         </button>
       </div>
 
@@ -191,7 +189,7 @@ function FixedDepositsSummarySection({
           <div className="fd-empty-state-content">
             <div className="fd-empty-icon">🏦</div>
             <p className="eyebrow">No fixed deposits yet</p>
-            <h3>Add your first FD</h3>
+          
           </div>
         </div>
       ) : (
