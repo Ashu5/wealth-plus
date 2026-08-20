@@ -202,7 +202,8 @@
   margin: 0;
 }
 
-.ewallet-add-bank-btn {
+.ewallet-add-bank-btn,
+.ewallet-add-epf-btn {
   width: fit-content;
   border: none;
   border-radius: 8px;
@@ -214,7 +215,8 @@
   cursor: pointer;
 }
 
-.ewallet-add-bank-btn:disabled {
+.ewallet-add-bank-btn:disabled,
+.ewallet-add-epf-btn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
