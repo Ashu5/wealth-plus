@@ -268,6 +268,104 @@
   font-size: 14px;
 }
 
+.ewallet-banks-container {
+  display: grid;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.ewallet-banks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ewallet-banks-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.ewallet-bank-form-wrapper {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.ewallet-banks-list {
+  display: grid;
+  gap: 16px;
+}
+
+.ewallet-bank-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.ewallet-bank-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ewallet-bank-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ewallet-bank-card-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ewallet-account-number-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ewallet-eye-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.ewallet-eye-btn:hover {
+  color: #1d4ed8;
+  background-color: #eff6ff;
+}
+
+.ewallet-eye-btn-inline {
+  padding: 0;
+  margin-left: 2px;
+}
+
 @media (max-width: 700px) {
   .ewallet-page {
     padding: 16px;

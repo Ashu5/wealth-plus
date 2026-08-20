@@ -3,6 +3,21 @@ import { getAuthToken } from './auth-token';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/koshmitra/api').replace(/\/$/, '');
 
+export type UserBankDetails = {
+  id?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  branchName?: string;
+  swiftCode?: string;
+  accountHolderName?: string;
+  accountHolderAddress?: string;
+  accountHolderPhoneNumber?: string;
+  accountHolderEmail?: string;
+  accountHolderDateOfBirth?: string;
+  userName?: string;
+  userEmail?: string;
+};
+
 export type AddBankPayload = {
   userEmail: string;
   userName: string;
@@ -22,9 +37,13 @@ export type AddBankPayload = {
   updatedAt: null;
 };
 
-export type BankDetails = Omit<AddBankPayload, 'updatedAt'> & {
+export type BankDetails = Partial<AddBankPayload> & {
   id?: string;
+  country?: string;
+  active?: boolean;
+  createdAt?: string;
   updatedAt?: string | null;
+  userBankDetails?: UserBankDetails;
 };
 
 const extractBankDetails = (payload: unknown): BankDetails[] => {
@@ -44,7 +63,7 @@ const extractBankDetails = (payload: unknown): BankDetails[] => {
     return bankCollection as BankDetails[];
   }
 
-  return typeof record.bankName === 'string' ? [record as BankDetails] : [];
+  return typeof record.bankName === 'string' || record.userBankDetails ? [record as BankDetails] : [];
 };
 
 export const addBank = async (payload: AddBankPayload) => {
