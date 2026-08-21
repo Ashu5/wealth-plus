@@ -8,6 +8,7 @@ export interface Fund {
   fundType: string;
   fundAmount: number;
   folioNumber: string;
+  folioNumbers?: string[];
   currency: string;
   createdDate: string;
   platform: Platform;

@@ -106,14 +106,14 @@ function AddAllocationModal({ isOpen, onClose }: AddAllocationModalProps) {
           </div>
 
           <div className="field-group">
-            <label htmlFor="folioNumber">Folio Number</label>
+            <label htmlFor="folioNumber">Folio Number(s)</label>
             <input
               id="folioNumber"
               name="folioNumber"
               type="text"
               value={allocationData.folioNumber}
               onChange={handleChange}
-              placeholder="123456789"
+              placeholder="e.g. 12345, 67890"
             />
           </div>
 

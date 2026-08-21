@@ -27,6 +27,7 @@ type FundRecord = {
   fundType: string;
   fundAmount: number;
   folioNumber: string;
+  folioNumbers?: string[];
   currency: string;
   platform: string;
   createdDate: string;
@@ -127,13 +128,25 @@ const normalizeFunds = (payload: unknown): FundRecord[] => {
       ? String((platformValue as Record<string, unknown>).platformName ?? (platformValue as Record<string, unknown>).platformCode ?? '')
       : String(platformValue ?? '');
 
+    const rawFolioNumbers = entry.folioNumbers;
+    const rawFolioNumber = entry.folioNumber;
+    let folioList: string[] = [];
+    if (Array.isArray(rawFolioNumbers)) {
+      folioList = rawFolioNumbers.map((f) => String(f).trim()).filter(Boolean);
+    } else if (Array.isArray(rawFolioNumber)) {
+      folioList = rawFolioNumber.map((f) => String(f).trim()).filter(Boolean);
+    } else if (typeof rawFolioNumber === 'string' && rawFolioNumber.trim()) {
+      folioList = rawFolioNumber.split(',').map((f) => f.trim()).filter(Boolean);
+    }
+
     return {
       id: String(entry.id ?? entry.fundId ?? entry.fundCode ?? entry.fundName ?? String(index)),
       fundName: String(entry.fundName ?? ''),
       fundCode: String(entry.fundCode ?? entry.platformCode ?? ''),
       fundType: String(entry.fundType ?? ''),
       fundAmount: Number(entry.fundAmount ?? entry.amount ?? 0),
-      folioNumber: String(entry.folioNumber ?? ''),
+      folioNumber: folioList.length > 0 ? folioList.join(', ') : String(entry.folioNumber ?? ''),
+      folioNumbers: folioList,
       currency: String(entry.currency ?? 'INR'),
       platform: platformName || String(entry.platformName ?? entry.platformCode ?? ''),
       createdDate: String(entry.createdDate ?? ''),
@@ -365,11 +378,17 @@ function MyFundsPage() {
       const userName = localStorage.getItem('wealth-plus-username')?.trim() || selectedFund.userName || '';
       const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || '';
 
+      const folioNumbers = formState.folioNumber
+        .split(',')
+        .map((num) => num.trim())
+        .filter(Boolean);
+
       await updateFundV2(formState.fundCode, {
         fundName: formState.fundName,
         fundCode: formState.fundCode,
         fundType: formState.fundType,
         folioNumber: formState.folioNumber,
+        folioNumbers,
         fundAmount: formState.fundAmount,
         platform: {
           platformName: formState.platform,
@@ -385,6 +404,7 @@ function MyFundsPage() {
         ...fund,
         ...selectedFund,
         ...formState,
+        folioNumbers,
         fundAmount: Number(formState.fundAmount),
       } : fund)));
 
@@ -654,8 +674,8 @@ function MyFundsPage() {
               </div>
 
               <div className="field-group">
-                <label htmlFor="folioNumber">Folio Number</label>
-                <input id="folioNumber" name="folioNumber" value={formState.folioNumber} onChange={handleFormChange} required />
+                <label htmlFor="folioNumber">Folio Number(s)</label>
+                <input id="folioNumber" name="folioNumber" value={formState.folioNumber} onChange={handleFormChange} placeholder="e.g. 001, 002, 003" required />
               </div>
 
               <div className="field-group">

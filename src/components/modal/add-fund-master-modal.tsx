@@ -73,7 +73,7 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
       return;
     }
 
-    const currentFolioPrefix = folioNumber.slice(0, 3);
+    const currentFolioPrefix = (folioNumber.split(',')[0] || '').trim().slice(0, 3);
 
     if (
       generatedFor.fundName === trimmedFundName
@@ -252,10 +252,16 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    const folioNumbers = fundMasterData.folioNumber
+      .split(',')
+      .map((num) => num.trim())
+      .filter(Boolean);
+
     const fundPayload = {
       fundName: fundMasterData.fundName,
       fundType: fundMasterData.fundType,
       folioNumber: fundMasterData.folioNumber,
+      folioNumbers,
       fundCode: fundMasterData.fundCode,
       fundAmount: fundMasterData.fundAmount,
       currency: fundMasterData.currency,
@@ -357,14 +363,14 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
           </div>
 
           <div className="field-group">
-            <label htmlFor="folioNumber">Folio Number</label>
+            <label htmlFor="folioNumber">Folio Number(s)</label>
             <input
               id="folioNumber"
               name="folioNumber"
               type="text"
               value={fundMasterData.folioNumber}
               onChange={handleChange}
-              placeholder="002"
+              placeholder="e.g. 001, 002, 003"
               required
             />
           </div>
@@ -507,14 +513,14 @@ function AddFundMasterModal({ isOpen = true, onClose, mode = 'modal', title = 'F
 
 
           <div className="field-group">
-            <label htmlFor="folioNumber">Folio Number</label>
+            <label htmlFor="folioNumber">Folio Number(s)</label>
             <input
               id="folioNumber"
               name="folioNumber"
               type="text"
               value={fundMasterData.folioNumber}
               onChange={handleChange}
-              placeholder="002"
+              placeholder="e.g. 001, 002, 003"
               required
             />
           </div>

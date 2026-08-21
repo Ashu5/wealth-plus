@@ -68,6 +68,7 @@ type UpdateFundV2Payload = {
     fundCode: string;
     fundType: string;
     folioNumber: string;
+    folioNumbers?: string[];
     fundAmount: string;
     platform: {
         platformName: string;
