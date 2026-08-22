@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { generateEmailOtp, verifyEmailOtp } from '../../services/auth-token';
+import { BankDetailsSection } from './bank-details-section';
+import { EpfDetailsSection } from './epf-details-section';
 import './e-wallet-page.css';
 
 type WalletSection = {
   id: string;
   title: string;
   details: Array<{ label: string; value: string }>;
+  unavailableMessage?: string;
 };
 
 type SecurityStep = 'email' | 'otp' | 'verified';
@@ -27,17 +30,9 @@ export const clearEWalletSession = () => {
   sessionStorage.removeItem(LOCKED_UNTIL_STORAGE_KEY);
 };
 
-const getUserFullName = () => {
-  const fullName = localStorage.getItem('wealth-plus-full-name')?.trim();
-  if (fullName) {
-    return fullName;
-  }
-
-  return localStorage.getItem('wealth-plus-username')?.trim() || 'N/A';
-};
-
 function EWalletPage() {
   const registeredEmail = localStorage.getItem('wealth-plus-email')?.trim() || '';
+  const userName = localStorage.getItem('wealth-plus-username')?.trim() || '';
   const [expandedSection, setExpandedSection] = useState<string>('bank-details');
   const [securityStep, setSecurityStep] = useState<SecurityStep>('email');
   const [emailInput, setEmailInput] = useState('');
@@ -190,68 +185,37 @@ function EWalletPage() {
     }
   };
 
-  const sections = useMemo<WalletSection[]>(() => {
-    const userFullName = getUserFullName();
-    const userEmail = localStorage.getItem('wealth-plus-email')?.trim() || 'N/A';
-
-    return [
-      {
-        id: 'bank-details',
-        title: 'Bank Details',
-        details: [
-          { label: 'Account Holder', value: userFullName },
-          { label: 'Primary Bank', value: 'HDFC Bank' },
-          { label: 'Account Type', value: 'Savings' },
-          { label: 'Account Number', value: 'XXXXXX2481' },
-          { label: 'IFSC', value: 'HDFC0000123' },
-        ],
-      },
-      {
-        id: 'financial-details',
-        title: 'Financial Details',
-        details: [
-          { label: 'Registered Email', value: userEmail },
-          { label: 'PAN', value: 'ABCDE1234F' },
-          { label: 'Annual Income Bracket', value: '10L - 15L' },
-          { label: 'Risk Profile', value: 'Moderate' },
-          { label: 'Tax Regime', value: 'New Regime' },
-        ],
-      },
-      {
-        id: 'nps',
-        title: 'NPS',
-        details: [
-          { label: 'PRAN', value: '110012345678' },
-          { label: 'Tier 1 Balance', value: 'INR 1,84,000' },
-          { label: 'Tier 2 Balance', value: 'INR 42,500' },
-          { label: 'Pension Fund Manager', value: 'HDFC Pension Fund' },
-          { label: 'Last Contribution', value: 'INR 5,000 (Jul 2026)' },
-        ],
-      },
-      {
-        id: 'epf',
-        title: 'EPF',
-        details: [
-          { label: 'UAN', value: '100234567890' },
-          { label: 'Member ID', value: 'DLCPM1234567000' },
-          { label: 'Current Balance', value: 'INR 3,12,800' },
-          { label: 'Employer', value: 'Wealth Plus Technologies' },
-          { label: 'Last Contribution', value: 'INR 7,500 (Jul 2026)' },
-        ],
-      },
-      {
-        id: 'insurance',
-        title: 'Insurance',
-        details: [
-          { label: 'Life Insurance', value: 'Term Plan - INR 1 Cr' },
-          { label: 'Health Insurance', value: 'Family Floater - INR 10 Lakh' },
-          { label: 'Policy Provider', value: 'ICICI Lombard' },
-          { label: 'Policy Renewal', value: '15 Dec 2026' },
-          { label: 'Nominee', value: 'Spouse' },
-        ],
-      },
-    ];
-  }, []);
+  const sections: WalletSection[] = [
+    {
+      id: 'bank-details',
+      title: 'Bank Details',
+      details: [],
+    },
+    {
+      id: 'financial-details',
+      title: 'Financial Details',
+      details: registeredEmail ? [{ label: 'Registered Email', value: registeredEmail }] : [],
+      unavailableMessage: 'Add your details to secure it digitally',
+    },
+    {
+      id: 'nps',
+      title: 'NPS',
+      details: [],
+      unavailableMessage: 'Add your details to secure it digitally',
+    },
+    {
+      id: 'epf',
+      title: 'EPF',
+      details: [],
+      unavailableMessage: 'Add your details to secure it digitally',
+    },
+    {
+      id: 'insurance',
+      title: 'Insurance',
+      details: [],
+      unavailableMessage: 'Add your details to secure it digitally',
+    },
+  ];
 
   const toggleSection = (sectionId: string) => {
     setExpandedSection((prev) => (prev === sectionId ? '' : sectionId));
@@ -347,14 +311,25 @@ function EWalletPage() {
 
                 {isOpen && (
                   <div id={`${section.id}-content`} className="ewallet-section-content">
-                    <dl>
-                      {section.details.map((detail) => (
-                        <div className="ewallet-detail-row" key={`${section.id}-${detail.label}`}>
-                          <dt>{detail.label}</dt>
-                          <dd>{detail.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
+                    {section.id === 'bank-details' ? (
+                      <BankDetailsSection registeredEmail={registeredEmail} userName={userName} />
+                    ) : section.id === 'epf' ? (
+                      <EpfDetailsSection userName={userName} />
+                    ) : (
+                      <>
+                        <dl>
+                          {section.details.map((detail) => (
+                            <div className="ewallet-detail-row" key={`${section.id}-${detail.label}`}>
+                              <dt>{detail.label}</dt>
+                              <dd>{detail.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                        {section.unavailableMessage && section.details.length === 0 ? (
+                          <p className="ewallet-empty-message">{section.unavailableMessage}</p>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 )}
               </article>

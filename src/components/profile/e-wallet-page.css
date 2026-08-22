@@ -187,6 +187,187 @@
   font-weight: 600;
 }
 
+.ewallet-empty-message {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.ewallet-empty-state {
+  display: grid;
+  gap: 12px;
+}
+
+.ewallet-empty-state .ewallet-empty-message {
+  margin: 0;
+}
+
+.ewallet-add-bank-btn,
+.ewallet-add-epf-btn {
+  width: fit-content;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ewallet-add-bank-btn:disabled,
+.ewallet-add-epf-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ewallet-bank-form {
+  display: grid;
+  width: min(100%, 720px);
+  gap: 12px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 12px;
+}
+
+.ewallet-bank-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ewallet-bank-form label {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ewallet-bank-form input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d1d9e6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #0f172a;
+  font: inherit;
+}
+
+.ewallet-bank-form input:read-only {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ewallet-bank-form-error {
+  margin: 0;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.ewallet-bank-form-message {
+  margin: 0 0 10px;
+  color: #166534;
+  font-size: 14px;
+}
+
+.ewallet-banks-container {
+  display: grid;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.ewallet-banks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ewallet-banks-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.ewallet-bank-form-wrapper {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.ewallet-banks-list {
+  display: grid;
+  gap: 16px;
+}
+
+.ewallet-bank-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.ewallet-bank-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ewallet-bank-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ewallet-bank-card-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ewallet-account-number-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ewallet-eye-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.ewallet-eye-btn:hover {
+  color: #1d4ed8;
+  background-color: #eff6ff;
+}
+
+.ewallet-eye-btn-inline {
+  padding: 0;
+  margin-left: 2px;
+}
+
 @media (max-width: 700px) {
   .ewallet-page {
     padding: 16px;
@@ -204,6 +385,10 @@
   .ewallet-detail-row {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .ewallet-bank-form-grid {
+    grid-template-columns: 1fr;
   }
 
   .ewallet-auth-btn,
