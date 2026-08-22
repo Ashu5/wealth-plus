@@ -47,23 +47,45 @@ export type BankDetails = Partial<AddBankPayload> & {
 };
 
 const extractBankDetails = (payload: unknown): BankDetails[] => {
-  if (Array.isArray(payload)) {
-    return payload as BankDetails[];
-  }
-
   if (!payload || typeof payload !== 'object') {
     return [];
   }
 
-  const record = payload as Record<string, unknown>;
-  const collections = [record.data, record.banks, record.items];
-  const bankCollection = collections.find(Array.isArray);
-
-  if (Array.isArray(bankCollection)) {
-    return bankCollection as BankDetails[];
+  if (Array.isArray(payload)) {
+    return payload as BankDetails[];
   }
 
-  return typeof record.bankName === 'string' || record.userBankDetails ? [record as BankDetails] : [];
+  const record = payload as Record<string, unknown>;
+  const inner = record.data ?? record.banks ?? record.items ?? record.result ?? record.body;
+
+  if (Array.isArray(inner)) {
+    return inner as BankDetails[];
+  }
+
+  if (inner && typeof inner === 'object') {
+    const innerObj = inner as Record<string, unknown>;
+    if (
+      innerObj.bankName ||
+      innerObj.bank_name ||
+      innerObj.accountNumber ||
+      innerObj.account_number ||
+      innerObj.userBankDetails
+    ) {
+      return [innerObj as BankDetails];
+    }
+  }
+
+  if (
+    record.bankName ||
+    record.bank_name ||
+    record.accountNumber ||
+    record.account_number ||
+    record.userBankDetails
+  ) {
+    return [record as BankDetails];
+  }
+
+  return [];
 };
 
 export const addBank = async (payload: AddBankPayload) => {
